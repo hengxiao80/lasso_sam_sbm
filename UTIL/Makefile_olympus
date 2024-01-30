@@ -1,0 +1,90 @@
+# Makefile to compile conversion utilities. You need to set include and library paths for NETCDF
+#
+
+PLATFORM := $(shell uname -s)
+
+# uncomment line for your platform or add your own:
+
+#---------------------------------------------------------
+#
+# PNNL Olympus Linux machines
+# PGI compiler
+
+ifeq ($(PLATFORM),Linux)
+#ifeq ($(PLATFORM),NOTNOT)
+
+FF77 = mpif90 -c
+FF90 = mpif90 -c
+CC = mpicc -c -DLINUX
+LD = mpif90
+
+LIB_MPI = ${MPI_ROOT}/lib
+INC_MPI = ${MPI_ROOT}/include
+
+LIB_NETCDF = ${NETCDF_LIB}
+INC_NETCDF = ${NETCDF_INCLUDE}
+
+#FF = mpif90 -DNO_R16 -i4 -Mdalign -Mextend -byteswapio -I${INC_MPI} -I${INC_NETCDF}
+FF = mpif90 -DNO_R16 -i4 -Mdalign -Mextend -byteswapio -I${INC_MPI} -I${INC_NETCDF}
+
+LDFLAGS = -L${LIB_MPI} -L${LIB_NETCDF} -lnetcdf -lnetcdff -lcurl
+
+
+#INC_NETCDF = /usr/local/netcdf-sun64/include
+#LIB_NETCDF = /usr/local/netcdf-sun64/lib
+#FF = sunf95 -g -C -fpp -xO3 -xvector=simd -ftrap=common -I${INC_NETCDF} -DUWM_STATS
+#LDFLAGS = -L${LIB_NETCDF} -lnetcdf  
+
+endif
+
+#---------------------------------------------------------
+#
+# UW Milwaukee Linux machines
+#
+
+#ifeq ($(PLATFORM),Linux)
+ifeq ($(PLATFORM),NOTNOT)
+INC_NETCDF = /usr/local/netcdf-sun64/include
+LIB_NETCDF = /usr/local/netcdf-sun64/lib
+FF = sunf95 -g -C -fpp -xO3 -xvector=simd -ftrap=common -I${INC_NETCDF} -DUWM_STATS
+LDFLAGS = -L${LIB_NETCDF} -lnetcdf  
+
+endif
+
+#---------------------------------------------------------
+
+# UWM's HPC Cluster
+#ifeq ($(PLATFORM),Linux)
+ifeq ($(PLATFORM),NOTNOT)
+
+INTEL_MPI = /sharedapps/ICC/11.1/openmpi/1.6.5
+
+LIB_MPI = $(INTEL_MPI)/lib
+INC_MPI = $(INTEL_MPI)/include
+
+LIB_NETCDF = /sharedapps/ICC/11.1/netcdf/4.3.0/lib
+INC_NETCDF = /sharedapps/ICC/11.1/netcdf/4.3.0/include
+
+LIB_ZLIB = /sharedapps/ICC/11.1/zlib/1.2.8/lib
+INC_ZLIB = /sharedapps/ICC/11.1/zlib/1.2.8/include
+
+LIB_HDF5 = /sharedapps/ICC/11.1/hdf5/1.8.12/lib
+INC_HDF5 = /sharedapps/ICC/11.1/hdf5/1.8.12/include
+
+LIB_LAPACK = -mkl=sequential
+
+FF = ifort -g -C -fpp -I${INC_NETCDF} -I${INC_MPI} -I${INC_NETCDF} -I${INC_ZLIB} -I${INC_HDF5} -DUWM_STATS -DNO_READ
+LDFLAGS = -L${LIB_MPI} -L${LIB_LAPACK} -L${LIB_ZLIB} -L${LIB_HDF5} -L${LIB_NETCDF} -lnetcdf -lnetcdff  
+
+endif
+#---------------------------------------------------------
+
+VPATH = ./SRC
+
+all: bin2D2nc bin3D2nc 2Dbin2nc 2Dbin2nc_mean bin3D2nc_mean com3D2bin 2Dcom2nc 2Dcom2nc_mean com3D2nc com3D2nc_mean com2D2nc stat2nc isccp2nc com3D2nc_sep 2Dbin2nc_sep 2Dcom_sep2one 2Dbin_sep2one com3D_sep2one bin3D_sep2one glue_movie_raw
+
+.f:   
+	$(FF) -o $@ -I./SRC $< ./SRC/hbuf_lib.f ./SRC/cape.f ./SRC/cin.f $(LDFLAGS) 
+
+clean: 
+	rm bin* com* stat* 2* isccp* *.o 
