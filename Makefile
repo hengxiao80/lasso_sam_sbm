@@ -60,8 +60,8 @@ LIB_MPI      := /sw/cirrus/spack-envs/base/opt/linux-rhel8-x86_64/intel-20.0.4/o
 #FFLAGS += -g -Ktrap=fp -Mbounds -Kieee
 
 ##intel compiler
-FFLAGS = -O0 -g -traceback -check bounds -check uninit -ftrapuv
-# FFLAGS = -O3
+# FFLAGS = -O0 -g -traceback -check bounds -check uninit -ftrapuv
+FFLAGS = -O3
 
 ##FFLAGS += -r8
 

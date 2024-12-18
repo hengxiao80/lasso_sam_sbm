@@ -26,7 +26,8 @@ real, parameter :: COL=0.23105
 
 ! Aerosols
 !  add for diagnostic CCN. If diagCCN=.false., CCN is prognostic
-LOGICAL, PARAMETER :: diagCCN=.false.
+! LOGICAL, PARAMETER :: diagCCN=.false.
+LOGICAL, PARAMETER :: diagCCN=.True.
 
 ! Parameters are used for calculation of 
 

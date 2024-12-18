@@ -234,8 +234,8 @@ real qv_old(nx, ny, nzm)
 !real, parameter    :: ql_prec = 1.e-9   ! min ql for precipitation
 real, parameter    :: ql_prec = 1.e-15   ! min ql for precipitation
 
-! double precision, parameter     :: ss_max = 0.003d+0    ! maximum supersaturation ratio for droplet activation
-double precision, parameter     :: ss_max = 0.03d+0    ! maximum supersaturation ratio for droplet activation
+double precision, parameter     :: ss_max = 0.003d+0    ! maximum supersaturation ratio for droplet activation
+! double precision, parameter     :: ss_max = 0.03d+0    ! maximum supersaturation ratio for droplet activation
 
 ! add for nucleation rate (J. Fan)
       REAL rnfreez(nx, ny, nzm), rnicr(nx, ny, nzm)
