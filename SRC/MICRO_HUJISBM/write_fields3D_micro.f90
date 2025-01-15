@@ -9,6 +9,7 @@ character *80 filename,long_name
 character *8 name
 character *10 timechar
 character *4 rankchar
+character *5 sepchar
 character *6 filetype
 character *10 units
 character *10 c_z(nzm),c_p(nzm),c_rho(nzm),c_dx, c_dy, c_time
@@ -26,8 +27,14 @@ nfields= 16+1+3*33 ! number of 3D fields to save
 ! if(.not.doprecip) nfields=nfields-1
 nfields1=0
 
-if(masterproc) then
+if(masterproc .or. output_sep) then
 
+  if(output_sep) then
+    write(rankchar,'(i4)') rank
+    sepchar="_"//rankchar(5-lenstr(rankchar):4)
+  else
+    sepchar=""
+  end if
   write(rankchar,'(i4)') nsubdomains
   write(timechar,'(i10)') nstep
   do k=1,11-lenstr(timechar)-1
@@ -41,7 +48,7 @@ if(masterproc) then
       filetype = '.com3D'
     end if
     filename='./OUT_3D/'//trim(case)//'_'//trim(caseid)//'_micro_'// &
-        rankchar(5-lenstr(rankchar):4)//'_'//timechar(1:10)//filetype
+        rankchar(5-lenstr(rankchar):4)//'_'//timechar(1:10)//filetype//sepchar
     open(46,file=filename,status='unknown',form='unformatted')
 
   else
@@ -60,11 +67,11 @@ if(masterproc) then
     end if
     if(save3Dsep) then
       filename='./OUT_3D/'//trim(case)//'_'//trim(caseid)//'_micro_'// &
-        rankchar(5-lenstr(rankchar):4)//'_'//timechar(1:10)//filetype
+        rankchar(5-lenstr(rankchar):4)//'_'//timechar(1:10)//filetype//sepchar
       open(46,file=filename,status='unknown',form='unformatted')	
     else
       filename='./OUT_3D/'//trim(case)//'_'//trim(caseid)//'_micro_'// &
-        rankchar(5-lenstr(rankchar):4)//filetype
+        rankchar(5-lenstr(rankchar):4)//filetype//sepchar
       if(nrestart.eq.0.and.notopened3D) then
          open(46,file=filename,status='unknown',form='unformatted')	
       else
@@ -76,60 +83,64 @@ if(masterproc) then
 
   end if
 
-  if(save3Dbin) then
+  if (masterproc) then
 
-    write(46) nx,ny,nzm,ncn,ncd,   &
-            nsubdomains,nsubdomains_x,nsubdomains_y,nfields
-    do k=1,nzm
-      write(46) z(k) 
-    end do
-    do k=1,nzm
-      write(46) pres(k)
-    end do
-    do k=1,nzm
-      write(46) rho(k)
-    end do
-    write(46) dx
-    write(46) dy
-    write(46) nstep*dt/(3600.*24.)+day0
-    do k=1,ncn
-      write(46) rccn(k)
-    end do
-    do k=1,ncn
-      write(46) DROPRADII(k)
-    end do
+    if(save3Dbin) then
 
-  else
+      write(46) nx,ny,nzm,ncn,ncd,   &
+              nsubdomains,nsubdomains_x,nsubdomains_y,nfields
+      do k=1,nzm
+        write(46) z(k) 
+      end do
+      do k=1,nzm
+        write(46) pres(k)
+      end do
+      do k=1,nzm
+        write(46) rho(k)
+      end do
+      write(46) dx
+      write(46) dy
+      write(46) nstep*dt/(3600.*24.)+day0
+      do k=1,ncn
+        write(46) rccn(k)
+      end do
+      do k=1,ncn
+        write(46) DROPRADII(k)
+      end do
 
-    write(long_name,'(10i4)') nx,ny,nzm,ncn,ncd, &
-             nsubdomains,nsubdomains_x,nsubdomains_y,nfields
-    do k=1,nzm
-       write(c_z(k),'(f10.3)') z(k)
-    end do
-    do k=1,nzm
-       write(c_p(k),'(f10.3)') pres(k)
-    end do
-    do k=1,nzm
-       write(c_rho(k),'(f10.3)') rho(k)
-    end do
-    write(c_dx,'(f10.0)') dx
-    write(c_dy,'(f10.0)') dy
-    write(c_time,'(f10.4)') nstep*dt/(3600.*24.)+day0
-    do k=1,ncn
-      write(c_rn(k),'(e10.4)') rccn(k)
-    end do
-    do k=1,ncn
-      write(c_rnr(k),'(e10.4)') DROPRADII(k)
-    end do
-	
-    write(46) long_name(1:40)
-    write(46) c_time,c_dx,c_dy,                                    &
-         (c_z(k),k=1,nzm),(c_p(k),k=1,nzm),(c_rho(k),k=1,nzm)
-    write(46)                                                      &
-         (c_rn(k),k=1,ncn),(c_rnr(k),k=1,ncn)
-  end if ! save3Dbin
+    else
 
-end if ! masterproc
+      write(long_name,'(10i4)') nx,ny,nzm,ncn,ncd, &
+              nsubdomains,nsubdomains_x,nsubdomains_y,nfields
+      do k=1,nzm
+        write(c_z(k),'(f10.3)') z(k)
+      end do
+      do k=1,nzm
+        write(c_p(k),'(f10.3)') pres(k)
+      end do
+      do k=1,nzm
+        write(c_rho(k),'(f10.3)') rho(k)
+      end do
+      write(c_dx,'(f10.0)') dx
+      write(c_dy,'(f10.0)') dy
+      write(c_time,'(f10.4)') nstep*dt/(3600.*24.)+day0
+      do k=1,ncn
+        write(c_rn(k),'(e10.4)') rccn(k)
+      end do
+      do k=1,ncn
+        write(c_rnr(k),'(e10.4)') DROPRADII(k)
+      end do
+    
+      write(46) long_name(1:40)
+      write(46) c_time,c_dx,c_dy,                                    &
+          (c_z(k),k=1,nzm),(c_p(k),k=1,nzm),(c_rho(k),k=1,nzm)
+      write(46)                                                      &
+          (c_rn(k),k=1,ncn),(c_rnr(k),k=1,ncn)
+    end if ! save3Dbin
+
+  end if ! masterproc
+
+end if ! masterproc.or.output_sep
 
   nfields1=nfields1+1
   do k=1,nzm

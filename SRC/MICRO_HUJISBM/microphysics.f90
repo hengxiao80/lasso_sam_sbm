@@ -2868,12 +2868,15 @@ subroutine micro_statistics()
       endif
   end do
 
-  do k=1,nzm
-      tmp(1) = dz/rhow(k)
-      tmp(2) = tmp(1) / dtn
-      mkwsb(k,:) = mkwsb(k,:) * tmp(1) * rhow(k) * lcond
-      mkwle(k,:) = mkwle(k,:)*tmp(2)*rhow(k)*lcond + mkwsb(k,:)
-  end do
+  ! commented out by Heng XIAO --- 12/18/2024
+  ! seems to be a bug. This is already done above.
+  ! do k=1,nzm
+  !     tmp(1) = dz/rhow(k)
+  !     tmp(2) = tmp(1) / dtn
+  !     mkwsb(k,:) = mkwsb(k,:) * tmp(1) * rhow(k) * lcond
+  !     mkwle(k,:) = mkwle(k,:)*tmp(2)*rhow(k)*lcond + mkwsb(k,:)
+  ! end do
+  ! commented out by Heng XIAO --- 12/18/2024
 !  call hbuf_put('QVFLUX',mkwle(:,3),factor_xy)
 !  call hbuf_put('QVFLUXS',mkwsb(:,3),factor_xy)
 !  call hbuf_put('QCFLUX',mkwle(:,4),factor_xy)

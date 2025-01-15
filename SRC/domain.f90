@@ -34,10 +34,10 @@ module domain
        ! integer, parameter :: nz_gl = 250 ! Number of pressure (scalar) levels
        ! integer, parameter :: nsubdomains_x  = 16 ! No of subdomains in x
        ! integer, parameter :: nsubdomains_y  = 16 ! No of subdomains in y
-       integer, parameter :: nx_gl = 2048 ! Number of grid points in Y
-       integer, parameter :: ny_gl = 2048 ! Number of grid points in Y
+       integer, parameter :: nx_gl = 1024 ! Number of grid points in Y
+       integer, parameter :: ny_gl = 1024 ! Number of grid points in Y
        integer, parameter :: nz_gl = 250 ! Number of pressure (scalar) levels
-       integer, parameter :: nsubdomains_x  = 64 ! No of subdomains in x
+       integer, parameter :: nsubdomains_x  = 32 ! No of subdomains in x
        integer, parameter :: nsubdomains_y  = 32 ! No of subdomains in y
 
        ! define # of points in x and y direction to average for 

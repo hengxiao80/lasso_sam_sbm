@@ -114,7 +114,8 @@ real, parameter :: C1_MEY=0.00012,C2_MEY=0.
 integer, parameter :: iceform = 1 
 
 ! For the diagnostic ice formation from SHEBA intercomparion (fixice = 1 and iceprocs=1), totin is used in ice_nucl_constrain.f90
-integer, parameter :: fixice = 0  ! this should be 0 if other ice nucleation mechanism is used
+! integer, parameter :: fixice = 0  ! this should be 0 if other ice nucleation mechanism is used
+integer, parameter :: fixice = 1  ! this should be 0 if other ice nucleation mechanism is used
 !real, parameter :: totin = 1.7e-3   ! 1.7 L-1
 !real, parameter :: totin = 1.7e-3*3.
 !real, parameter :: totin = 1.7e-3*0.1

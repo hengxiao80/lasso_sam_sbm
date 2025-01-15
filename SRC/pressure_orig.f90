@@ -158,22 +158,22 @@ end do
 
 if(rank.lt.npressureslabs) then
 
- call fftfax(nx_gl,ifaxi,trigxi)
- if(RUN3D) call fftfax(ny_gl,ifaxj,trigxj)
+ call fftfax_crm(nx_gl,ifaxi,trigxi)
+ if(RUN3D) call fftfax_crm(ny_gl,ifaxj,trigxj)
 
  do k=1,nzslab
 
   if(dowallx) then
-   call cosft(f(1,1,k),work,trigxi,ifaxi,1,nx2,nx_gl,ny_gl,-1)
+   call cosft_crm(f(1,1,k),work,trigxi,ifaxi,1,nx2,nx_gl,ny_gl,-1)
   else
-   call fft991(f(1,1,k),work,trigxi,ifaxi,1,nx2,nx_gl,ny_gl,-1)
+   call fft991_crm(f(1,1,k),work,trigxi,ifaxi,1,nx2,nx_gl,ny_gl,-1)
   end if
 
   if(RUN3D) then
    if(dowally) then
-     call cosft(f(1,1,k),work,trigxj,ifaxj,nx2,1,ny_gl,nx_gl+1,-1)
+     call cosft_crm(f(1,1,k),work,trigxj,ifaxj,nx2,1,ny_gl,nx_gl+1,-1)
    else
-     call fft991(f(1,1,k),work,trigxj,ifaxj,nx2,1,ny_gl,nx_gl+1,-1)
+     call fft991_crm(f(1,1,k),work,trigxj,ifaxj,nx2,1,ny_gl,nx_gl+1,-1)
    end if
   end if
 
@@ -408,16 +408,16 @@ if(rank.lt.npressureslabs) then
 
   if(RUN3D) then
    if(dowally) then
-     call cosft(f(1,1,k),work,trigxj,ifaxj,nx2,1,ny_gl,nx_gl+1,+1)
+     call cosft_crm(f(1,1,k),work,trigxj,ifaxj,nx2,1,ny_gl,nx_gl+1,+1)
    else
-     call fft991(f(1,1,k),work,trigxj,ifaxj,nx2,1,ny_gl,nx_gl+1,+1)
+     call fft991_crm(f(1,1,k),work,trigxj,ifaxj,nx2,1,ny_gl,nx_gl+1,+1)
    end if
   end if
 	 
   if(dowallx) then
-   call cosft(f(1,1,k),work,trigxi,ifaxi,1,nx2,nx_gl,ny_gl,+1)
+   call cosft_crm(f(1,1,k),work,trigxi,ifaxi,1,nx2,nx_gl,ny_gl,+1)
   else
-   call fft991(f(1,1,k),work,trigxi,ifaxi,1,nx2,nx_gl,ny_gl,+1)
+   call fft991_crm(f(1,1,k),work,trigxi,ifaxi,1,nx2,nx_gl,ny_gl,+1)
   end if
 
  end do 
