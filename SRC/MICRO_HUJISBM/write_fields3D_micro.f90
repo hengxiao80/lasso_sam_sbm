@@ -21,7 +21,8 @@ character *3 binumber
 integer m
 
 
-nfields= 16+1+3*33 ! number of 3D fields to save
+! nfields= 16+1+3*33 ! number of 3D fields to save
+nfields= 16+1+2*33 ! number of 3D fields to save
 
 ! if(.not.docloud) nfields=nfields-1
 ! if(.not.doprecip) nfields=nfields-1
@@ -431,35 +432,35 @@ end if ! masterproc.or.output_sep
 
 ! Write ice partical spectrum
 
-  do m=1,ncd
+!   do m=1,ncd
 
-    write(binumber,'(i3)') m
-    do k=1,3-lenstr(binumber)
-      binumber(k:k)='0'
-    end do
+!     write(binumber,'(i3)') m
+!     do k=1,3-lenstr(binumber)
+!       binumber(k:k)='0'
+!     end do
 
-    nfields1=nfields1+1
-    do k=1,nzm
-     do j=1,ny
-      do i=1,nx
-!        tmp(i,j,k)=fmcd(i,j,k,m)*1000.                ! g/kg/bin
-        tmp(i,j,k)=(ffic(i,j,k,m)/(Xi(m,1)*1.e-3)*rho(k)*col +    &
-   &                ffip(i,j,k,m)/(Xi(m,2)*1.e-3)*rho(k)*col +    &
-   &                ffiD(i,j,k,m)/(Xi(m,3)*1.e-3)*rho(k)*col +    &
-   &                ffsn(i,j,k,m)/(XS(m)*1.e-3)*rho(k)*col +      &
-   &                ffgl(i,j,k,m)/(XG(m)*1.e-3)*rho(k)*col +      &
-   &                ffhl(i,j,k,m)/(Xh(m)*1.e-3)*rho(k)*col)*1.0e-3        ! #/L/bin
-      end do
-     end do
-    end do
-    name='FFIN'//binumber(1:3)
-    long_name='Ice partical Number Concentration per bin '//binumber(1:3)
-!    long_name='Liquid Water Mixing Ratio bin '//binumber(1:3)
-!    units='g/kg/bin'
-    units='#/L/bin'
-    call compress3D(tmp,nx,ny,nzm,name,long_name,units, &
-                                 save3Dbin,dompi,rank,nsubdomains)
-  end do    ! m
+!     nfields1=nfields1+1
+!     do k=1,nzm
+!      do j=1,ny
+!       do i=1,nx
+! !        tmp(i,j,k)=fmcd(i,j,k,m)*1000.                ! g/kg/bin
+!         tmp(i,j,k)=(ffic(i,j,k,m)/(Xi(m,1)*1.e-3)*rho(k)*col +    &
+!    &                ffip(i,j,k,m)/(Xi(m,2)*1.e-3)*rho(k)*col +    &
+!    &                ffiD(i,j,k,m)/(Xi(m,3)*1.e-3)*rho(k)*col +    &
+!    &                ffsn(i,j,k,m)/(XS(m)*1.e-3)*rho(k)*col +      &
+!    &                ffgl(i,j,k,m)/(XG(m)*1.e-3)*rho(k)*col +      &
+!    &                ffhl(i,j,k,m)/(Xh(m)*1.e-3)*rho(k)*col)*1.0e-3        ! #/L/bin
+!       end do
+!      end do
+!     end do
+!     name='FFIN'//binumber(1:3)
+!     long_name='Ice partical Number Concentration per bin '//binumber(1:3)
+! !    long_name='Liquid Water Mixing Ratio bin '//binumber(1:3)
+! !    units='g/kg/bin'
+!     units='#/L/bin'
+!     call compress3D(tmp,nx,ny,nzm,name,long_name,units, &
+!                                  save3Dbin,dompi,rank,nsubdomains)
+!   end do    ! m
 
   call task_barrier()
   print*, nfields, nfields1

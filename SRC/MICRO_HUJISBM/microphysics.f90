@@ -40,15 +40,16 @@ real micro_field(dimx1_s:dimx2_s, dimy1_s:dimy2_s, nzm, nmicro_fields)
 !        &       ,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1/) 
 integer, parameter :: flag_wmass(nmicro_fields) = (/1,                          &
      0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,         &
-     0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,         &
-     0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,         &
-     0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,         &
-     0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,         &
-     0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,         &
-     0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,         &
-     0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,         &
-! add for IN
      0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0/)
+    !  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,         &
+    !  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,         &
+    !  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,         &
+    !  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,         &
+    !  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,         &
+    !  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,         &
+    !  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,         &
+! add for IN
+    !  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0/)
 
 ! To implement large-scale forcing, surface fluxes, etc, SAM needs to know
 ! which variable has a water vapor information. In our example, it is variable #3:
@@ -79,15 +80,16 @@ integer, parameter :: index_water_vapor = 1 ! index for variable that contains w
 !26 oct 2009: added sedimentation for all liquid and ice particles (MO)
 integer, parameter :: flag_precip(nmicro_fields) = (/0,                         &
      0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,         &
-     1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,         &
-     1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,         &
-     1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,         &
-     1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,         &
-     1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,         &
-     1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,         &
-     1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,         &
+     1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1/)
+    !  1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,         &
+    !  1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,         &
+    !  1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,         &
+    !  1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,         &
+    !  1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,         &
+    !  1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,         &
+    !  1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,         &
 ! add for IN
-     0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0/)
+    !  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0/)
 
 
 ! Sometimes, cloud ice (or even cloud water) is allowed to be a subject of
@@ -142,14 +144,14 @@ real ffin(dimx1_s:dimx2_s,dimy1_s:dimy2_s,nzm,ncd) !
 equivalence (qt(dimx1_s,dimy1_s,1),micro_field(dimx1_s,dimy1_s,1,1))
 equivalence (fncn(dimx1_s,dimy1_s,1,1),micro_field(dimx1_s,dimy1_s,1,2))
 equivalence (ffcd(dimx1_s,dimy1_s,1,1),micro_field(dimx1_s,dimy1_s,1,ncn+2))
-equivalence (ffic(dimx1_s,dimy1_s,1,1),micro_field(dimx1_s,dimy1_s,1,ncn*2+2))
-equivalence (ffip(dimx1_s,dimy1_s,1,1),micro_field(dimx1_s,dimy1_s,1,ncn*3+2))
-equivalence (ffid(dimx1_s,dimy1_s,1,1),micro_field(dimx1_s,dimy1_s,1,ncn*4+2))
-equivalence (ffsn(dimx1_s,dimy1_s,1,1),micro_field(dimx1_s,dimy1_s,1,ncn*5+2))
-equivalence (ffgl(dimx1_s,dimy1_s,1,1),micro_field(dimx1_s,dimy1_s,1,ncn*6+2))
-equivalence (ffhl(dimx1_s,dimy1_s,1,1),micro_field(dimx1_s,dimy1_s,1,ncn*7+2))
+! equivalence (ffic(dimx1_s,dimy1_s,1,1),micro_field(dimx1_s,dimy1_s,1,ncn*2+2))
+! equivalence (ffip(dimx1_s,dimy1_s,1,1),micro_field(dimx1_s,dimy1_s,1,ncn*3+2))
+! equivalence (ffid(dimx1_s,dimy1_s,1,1),micro_field(dimx1_s,dimy1_s,1,ncn*4+2))
+! equivalence (ffsn(dimx1_s,dimy1_s,1,1),micro_field(dimx1_s,dimy1_s,1,ncn*5+2))
+! equivalence (ffgl(dimx1_s,dimy1_s,1,1),micro_field(dimx1_s,dimy1_s,1,ncn*6+2))
+! equivalence (ffhl(dimx1_s,dimy1_s,1,1),micro_field(dimx1_s,dimy1_s,1,ncn*7+2))
 !add for in
-equivalence (ffin(dimx1_s,dimy1_s,1,1),micro_field(dimx1_s,dimy1_s,1,ncn*8+2))
+! equivalence (ffin(dimx1_s,dimy1_s,1,1),micro_field(dimx1_s,dimy1_s,1,ncn*8+2))
 
 !--------------------------------------------------------------------
 ! diagnostic variables (3D arrays):
@@ -1968,6 +1970,13 @@ end subroutine micro_print
   if(nrestart.eq.0) then     ! initialize arrays for the initial run
 
      micro_field = 0.
+     ffic = 0.
+     ffid = 0.
+     ffip = 0.
+     ffsn = 0.
+     ffgl = 0.
+     ffhl = 0.
+     ffin = 0.
      qc = 0.
      qr = 0.
      qi = 0.
@@ -1995,6 +2004,13 @@ end subroutine micro_print
          call micro_diagnose()
         endif
   else                          !  nrestart /= 0  then this is a continuation run
+      ffic = 0.
+      ffid = 0.
+      ffip = 0.
+      ffsn = 0.
+      ffgl = 0.
+      ffhl = 0.
+      ffin = 0.
        do k=1,nzm
         do j=1,ny
          do i=1,nx

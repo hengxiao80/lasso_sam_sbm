@@ -15,7 +15,9 @@ integer, parameter :: nin=33
 integer, parameter :: ncd=33
 
 !total number of prognostic microphysical variables
-integer, parameter :: nmicro_fields = 1+ncn+ncd*7+nin
+! integer, parameter :: nmicro_fields = 1+ncn+ncd*7+nin
+! liquid-only setup
+integer, parameter :: nmicro_fields = 1+ncn+ncd
 
 ! for bulk nucleation
 integer, parameter :: BULKNUC=0
@@ -86,7 +88,8 @@ integer, parameter :: ICETURB=1
 
 !c if ICEPROCS=1 it is ice microphysics
 
-integer, parameter :: ICEPROCS=1
+! integer, parameter :: ICEPROCS=1
+integer, parameter :: ICEPROCS=0
 
 ! ICEFLAG=0 USE MEYERS ICE NUCLEATION SCHEME; ICEFLAG=1 USE Classical Theory
 integer, parameter :: ICEFLAG=0
