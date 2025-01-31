@@ -3,7 +3,7 @@ module sgs
 ! module for original SAM subgrid-scale SGS closure (Smagorinsky or 1st-order TKE)
 ! Marat Khairoutdinov, 2012
 
-use grid, only: nx,nxp1,ny,nyp1,YES3D,nzm,nz,dimx1_s,dimx2_s,dimy1_s,dimy2_s 
+use grid, only: nx,nxp1,ny,nyp1,YES3D,nzm,nz,masterproc,dimx1_s,dimx2_s,dimy1_s,dimy2_s 
 use params, only: dosgs
 implicit none
 
@@ -63,11 +63,6 @@ real grdf_x(nzm)! grid factor for eddy diffusion in x
 real grdf_y(nzm)! grid factor for eddy diffusion in y
 real grdf_z(nzm)! grid factor for eddy diffusion in z
 
-! --- Heng Xiao, 03/13/2024
-! adding a switch for isotropic grdf
-logical, parameter :: isotropic_grdf = .false.
-! --- Heng Xiao, 03/13/2024
-
 logical:: dosmagor   ! if true, then use Smagorinsky closure
 
 ! Local diagnostics:
@@ -88,6 +83,7 @@ subroutine sgs_setparm()
   integer ierr, ios, ios_missing_namelist, place_holder
 
   !======================================================================
+  ! UW ADDITION
   NAMELIST /SGS_TKE/ &
        dosmagor ! Diagnostic Smagorinsky closure
 
@@ -151,16 +147,8 @@ subroutine sgs_init()
 
   if(LES) then
     do k=1,nzm
-       ! Heng Xiao, 02/28/2024, 03/13/2024
-       ! adding a switch for isotropic grdf
-       if (isotropic_grdf) then
-         grdf_x(k) = 1.
-         grdf_y(k) = 1.
-       else
-         grdf_x(k) = dx**2/(adz(k)*dz)**2
-         grdf_y(k) = dy**2/(adz(k)*dz)**2
-       end if
-       ! Heng Xiao, 02/28/2024, 03/13/2024
+       grdf_x(k) = dx**2/(adz(k)*dz)**2
+       grdf_y(k) = dy**2/(adz(k)*dz)**2
        grdf_z(k) = 1.
     end do
   else
@@ -268,8 +256,21 @@ select case (ptype)
       end do
      end do
 
+  case(7)  ! VOCALS
+
+     do k=1,nzm
+      do j=1,ny
+       do i=1,nx
+         if(z(k).le.1500..and..not.dosmagor) then
+            tke(i,j,k)=1.-z(k)/1500.
+         endif
+       end do
+      end do
+     end do
+
 
   case default
+    if(masterproc) print*,' WARNING: SGS TKE perturb_type is not defined in setperturb_sgs()'
 
 end select
 
@@ -328,6 +329,7 @@ subroutine sgs_scalars()
     real fluxbtmp(nx,ny), fluxttmp(nx,ny) !bloss
     integer k
 
+
       call diffuse_scalar(t,fluxbt,fluxtt,tdiff,twsb, &
                            t2lediff,t2lediss,twlediff,.true.)
     
@@ -344,17 +346,10 @@ subroutine sgs_scalars()
 
       total_water_evap = total_water_evap - total_water()
 
-      ! --- Heng Xiao, 01/31/2025
-      ! added parentheses around docloud.and.flag_precip(k).ne.1,
-      ! doprecip.and.flag_precip(k).eq.1. The original code might be
-      ! doing the same thing because .and. are evaluated before .or.
-      ! in Fortran90 according to online search but adding the parentheses
-      ! just saves the time for searching online or inward.
-      ! --- Heng Xiao, 01/31/2025
       do k = 1,nmicro_fields
         if(   k.eq.index_water_vapor             &! transport water-vapor variable no metter what
-         .or. (docloud.and.flag_precip(k).ne.1)    & ! transport non-precipitation vars
-         .or. (doprecip.and.flag_precip(k).eq.1) ) then
+         .or. docloud.and.flag_precip(k).ne.1    & ! transport non-precipitation vars
+         .or. doprecip.and.flag_precip(k).eq.1 ) then
            fluxbtmp(1:nx,1:ny) = fluxbmk(1:nx,1:ny,k)
            fluxttmp(1:nx,1:ny) = fluxtmk(1:nx,1:ny,k)
            call diffuse_scalar(micro_field(:,:,:,k),fluxbtmp,fluxttmp, &
@@ -383,6 +378,8 @@ subroutine sgs_scalars()
         end do
 
       end if
+
+
 
 end subroutine sgs_scalars
 
