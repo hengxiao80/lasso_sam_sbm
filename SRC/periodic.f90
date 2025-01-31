@@ -80,7 +80,8 @@ if(flag.eq.4) then
  do i = 1,nsgs_fields_diag
     if(dosgs.and.do_sgsdiag_bound) &
      call bound_exchange(sgs_field_diag(:,:,:,i),dimx1_d,dimx2_d,dimy1_d,dimy2_d,nzm, &
-                   1+dimx1_d,dimx2_d-nx,YES3D+dimy1_d,1-YES3D+dimy2_d-ny,4+nsgs_fields+i)
+                  !  1+dimx1_d,dimx2_d-nx,YES3D+dimy1_d,1-YES3D+dimy2_d-ny,4+nsgs_fields+i)
+                     1-dimx1_d,dimx2_d-nx,YES3D*(1-dimy1_d),1-YES3D+dimy2_d-ny,4+nsgs_fields+i)
  end do
 
 end if
