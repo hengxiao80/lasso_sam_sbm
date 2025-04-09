@@ -1,0 +1,95 @@
+- SRC/MICRO_HUJISBM/microphysics.f90
+    - Effective radius calculation now over the entire droplet spectrum so that it is consistent with the use of both qcl and qpl in calculating liquid water path in RRTM
+    - In the previous version, qcl includes both qc and qr and qpl is 0. Now qcl is qc and qpl is qr (this entails quite a few changes else where in the code)
+    - Changed the description of QTFLUX and QTFLUXS because the "qt" they use includes both non-precip. and precip. water species in HUJISBM
+    - removed code related to a few output variables that not actually calculated in HUJISBM
+- SRC/MICRO_HUJISBM/write_fields3D_micro.f90
+    - changed the description of QT to be consistent with the definition of "qt" in the HUJISBM code
+    - changed the units all Q* to be g/kg instead of g/m^3 to be comparable to the general 3-D output
+- SRC/RAD_RRTM/rad.f90
+    - calculating LWP using qcl and qpl
+    - putting radiation restart files into subdirectories (using the time step as name) in RESTART as well
+- SRC/diagnose.f90
+    - added notes for the calculation of q0
+    - added rw_xy and piw_xy for PLWP and PIWP output
+    - switched to qcl+qci>1.0e-12 for cloudtopheight and cloudtoptemp calculation
+    - switched to qcl+qpl>1.0e-12 or qci+qpi>1.0e-12 for cld_xy calculation (to be consistent with s_acld or "CLDSHD" calculation in statistics.f90)
+- SRC/forcing.f90
+    - calculate uu/vv from uls/vls and uug/vvg from ugls/vgls if read_in_geostrophic_wind is true
+    - renamed wgls to wls
+    - calculate ug0/vg0 using uug/vvg instead of uu/vv if read_in_geostrophic_wind is true
+    - calculate ul0/vl0 from uu/vv 
+    - The above calculations and that of wsub are done if dolargescale is true whereas originally time>timelargescale is also required. But ttend/qtend are only applied if time>timelargescale.
+    - call subsidence only when both dosubsidence is true and time > timelargescale. Originally subsidence is applied as long as dosubsidence is true.
+    - tabs_s (sstxy), fluxt0, fluxq0, tau0 are updated if dosfcforcing is true.
+    Originally, time > timelargescale is also required. The last three mods were added so that we can implement the so-called delayed largescale forcing trick at the beginning of the simulation wherein we apply surface fluxes but not largescale tendencies and subsidence unless time>timelargescale.
+- SRC/grid.f90
+    - removed a few unused variables added by Mikhail O.
+- SRC/hbuffer.f90
+    - removed cwp2 calculation as it is no longer output
+    - numbered the time-only output to stats
+    - removed additional time-only output (zinv etc. after number 68)
+- SRC/nudging.f90
+    - nudging u0/v0 to ul0/vl0 instead of ug0/vg0
+    - cleaned up the code for u/v nudging so that the nudging time scale is controlled by tauls and nudging_uv_z1/z2 control the height range of nudding. Above nudging_uv_z2, the nudging time scale is tauls between nudging_uv_z1 and z2, the nudging time scale increases from tauls to infinity.
+    - added nudging_tq_t1/t2, nudging_t_z1/z2, nudging_q_z1/z2 for temperature and moisture nudging
+- SRC/params.f90
+    - added uniform_sfc_flx
+    - added read_in_geostrophic_wind
+    - added nudging_tq_t1/t2 (nudging_t_z1/z2, nudging_q_z1/z2, nudging_uv_z1/z2 are already there)
+- SRC/readiopdata.f90
+    - renamed wgls to wls for consistency
+- SRC/restart.f90
+    - now write out restart files to subdirectories (using the time step as name) in RESTART
+- SRC/setforcing.f90
+    - added code to read in ugls/vgls in addition to uls/vls
+- SRC/setparm.f90
+    - added nudging_tq_t1/t2 to the list of parameters 
+    - added compute_reffc, compute_reffi
+    - removed a few parameters added by Mikhail O.
+- SRC/setperturb.f90
+    - changed case 5 (BOMEX case) upper limit of z for perturbation from 1600 to 600 m for LASSO ENA cases
+- SRC/stat_2Dinit.f90
+    - added initialization for rw_xy and piw_xy
+- SRC/statistics.f90
+    - removed cwpmax, cwp, cwpl, cwpm, cwph, cwp2 calculation
+    - removed lwp, iwp, zctl_xy, zcbl_xy, zinv_xy (all added by Mikhail O.)
+    - "UOBS"/"VOBS" now point to ul0/vl0 instead of ug0/vg0
+    - removed s_arthr
+    - changed coef to be 1.0e-12 instead of 0.0 for LES for conditional sampling of cloudy points 
+    - changed qpl+qpi criterion for unsaturated downdrafts or "hydro" to be 1.0e-6 instead of 1.0e-4 to be consistent across the code
+    - removed s_acldl, s_acldh, s_acldm, s_acldcold calculation
+    - changed z_inv_ind calculation to look up to 6000 m instead of 4000 m
+    - changed z_base_ind and z_top_ind calculation to use qcl+qci>1.0e-12 criterion
+    - renamed all "HL" terms to "TL"
+    - moved "RADQRC"/"RADQRS" to after cldclmn calculation
+    - changed cf_lz, cf_iz calculation to use 1.0e-12 criterion
+    - changed cldclmn criterion to qcl+qpl>1.0e-12 or qci+qpi>1.0e-12
+    - removed lwp_var/iwp_var calculation
+    - removed zctl, zcbl, zinv calculation but kept z_ctl, z_cbl and z_inv calculations
+    - changed the way s_acld, cf_lz, cf_iz are accumulated/averaged in time/across subdomains to be consistent with the original SAM way (rather than using Mikhail's way to mininize confusion)
+    - removed WUP_FR, WDN_FR, WUP, WDN calculation
+- SRC/surface.f90
+    - added UNIFORM_SFC_FLX so that if UNIFORM_SFC_FLX is .False. surface fluxes are calculated at each grid point using local profiles.
+- SRC/vars.f90
+    - added ul0, vl0, uls, vls
+    - renamed wgls to wls
+    - added rw_xy, piw_xy
+- SRC/write_fields2D.f90
+    - removed u200, v200, w500
+    - water path variables now are CLWP, CIWP, PLWP, PIWP.
+- SRC/write_fields3D.f90
+    - water variables are now QCL, QCI, QPL, QPI
+- UTIL/SRC/hbuf_lib.f
+    - added a note to clarify the additional "f" in some of the read statements
+- UTIL/SRC/stat2nc.f
+    - removed the output of CLD245, CLDLOW, CLDMID, CLDHI, all the satellite simulator variables, LWP, LWP2, NCMN, NRMN, AREAPRTHR
+    - changed/added calculations for CWP, IWP, RWP, SWP, GWP, HWP to use "MQ*" in hbuf
+    - removed the warning about the mismatch between npar and nparms
+- lst
+    - created a version (lst.lasso_ena) for LASSO ENA runs with HUJISBM;
+    - got rid of variables not calculated by HUJISBM;
+    - got rid of variables not calculated in the model ("S2" and Q1/Q2 related variables);
+    - renamed variables associated with "t" in the code (liquid-ice water static energy) from HL to TL;
+    - removed CORE, COREDN, WUP, WDN, WUP_FR, WDN_FR, QNFR, FRACT
+- added hujisbm_com3D* files (with corresponding changes to Makefile) to UTIL/SRC for handling 3D microphysics output from HUJISBM 
