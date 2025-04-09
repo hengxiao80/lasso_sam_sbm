@@ -71,7 +71,10 @@ c===========================
          read(unit,end=111)  
          ntime=ntime+1
          read (unit,err=555) f,f,n,n,n,n,nzm,f,f,f,
+	! note: the single f is there because in hbuf_write in the SAM code
+    ! the variable being read in, "z", is actually "nz"-long not "nzm"-long. So f is needed to make up for the difference.
      &          (tmp(k),k=1,nzm),(tmp(k),k=1,nzm),f,(tmp(k),k=1,nzm),
+	! note: only the first nparm parameters are read in (which is set to nparms, which is 68 in this case)
      &		(parms(k+nparm*(ntime-1)),k=1,nparm)
 	 goto 666
  555	 nparm=8  ! old dataset

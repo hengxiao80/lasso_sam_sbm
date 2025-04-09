@@ -65,13 +65,22 @@ logical:: ocean =.false.  ! flag indicating that surface is water
 logical:: land =.false.   ! flag indicating that surface is land
 logical:: sfc_flx_fxd =.false. ! surface sensible flux is fixed
 logical:: sfc_tau_fxd =.false.! surface drag is fixed
-
+! --- Heng Xiao 09/18/2024
+logical:: uniform_sfc_flx = .true.
+! --- Heng Xiao 09/18/2024
+! --- Heng Xiao 09/24/2024
+logical:: read_in_geostrophic_wind = .false.
+! --- Heng Xiao 09/24/2024
 real:: timelargescale =0. ! time to start large-scale forcing
 
 ! nudging boundaries (between z1 and z2, where z2 > z1): 
 real:: nudging_uv_z1 =-1., nudging_uv_z2 = 1000000.
 real:: nudging_t_z1 =-1., nudging_t_z2 = 1000000.
 real:: nudging_q_z1 =-1., nudging_q_z2 = 1000000.
+! --- Heng Xiao 02/19/2024
+! Adding nudging_tq start and end times (in seconds since start)
+real:: nudging_tq_t1 = 0., nudging_tq_t2 = 8640000.
+! --- Heng Xiao 02/19/2024
 real:: tauls = 99999999.    ! nudging-to-large-scaler-profile time-scale
 real:: tautqls = 99999999.! nudging-to-large-scaler-profile time-scale for scalars
 

@@ -40,13 +40,22 @@ do k=1,nzm
      p0(k)=p0(k)+p(i,j,k)
      t0(k)=t0(k)+t(i,j,k)
      tabs0(k)=tabs0(k)+tabs(i,j,k)
+     ! Following SAM defaults qpl&qpi are not included in q0.
+     ! q0 is used in
+     ! (1) in pressz.f90 for hydrostatic pressure update
+     ! (2) in nudging.f90 for nudging t and q
+     ! (3) in damping.f90 and damping.f90.new for damping (commented out in damping.f90 as of now)
+     ! (4) in surface.f90 for surface fluxes (uniform case)
+     ! - Heng Xiao 03/24/2025
      q0(k)=q0(k)+qv(i,j,k)+qcl(i,j,k)+qci(i,j,k)
      qn0(k) = qn0(k) + qcl(i,j,k) + qci(i,j,k)
      qp0(k) = qp0(k) + qpl(i,j,k) + qpi(i,j,k)
 
      pw_xy(i,j) = pw_xy(i,j)+qv(i,j,k)*coef1
      cw_xy(i,j) = cw_xy(i,j)+qcl(i,j,k)*coef1
+     rw_xy(i,j) = rw_xy(i,j)+qpl(i,j,k)*coef1
      iw_xy(i,j) = iw_xy(i,j)+qci(i,j,k)*coef1
+     piw_xy(i,j) = piw_xy(i,j)+qpi(i,j,k)*coef1
 
     end do
   end do
@@ -161,12 +170,21 @@ echotopheight = 0.
 do j = 1,ny
    do i = 1,nx
       ! FIND CLOUD TOP HEIGHT
-      tmp_lwp = 0.
+      ! tmp_hwp = 0.
       do k = nzm,1,-1
-         tmp_lwp = tmp_lwp + (qcl(i,j,k)+qci(i,j,k))*rho(k)*dz*adz(k)
-         if (tmp_lwp.gt.0.01) then
+         ! tmp_hwp = tmp_hwp + (qcl(i,j,k)+qpl(i,j,k)+qci(i,j,k)+qpi(i,j,k))*rho(k)*dz*adz(k)
+         ! if (tmp_hwp.gt.0.01) then
+         ! using the same criterion as in statistics.f90 for z_ct calculations
+         if ((qcl(i,j,k)+qci(i,j,k)) .gt. 1.0e-12) then
             cloudtopheight(i,j) = z(k)
             cloudtoptemp(i,j) = tabs(i,j,k)
+            EXIT
+         end if
+      end do
+      do k = nzm,1,-1
+         ! using a criterion consistent with the one used in CLDSHD calculation in statistics.f90
+         ! - Heng Xiao 03/27/2025
+         if ((qcl(i,j,k)+qpl(i,j,k)) .gt. 1.0e-12 .or. (qci(i,j,k)+qpi(i,j,k)).gt.1.0e-12) then
             cld_xy(i,j) = cld_xy(i,j) + dtfactor
             EXIT
          end if

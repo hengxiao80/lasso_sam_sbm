@@ -165,18 +165,6 @@ logical:: wgls_holds_omega = .false.
 
 ! Add for ISDAC intercomparison (MO: mikhail@pnnl.gov)
 
-integer:: ntraj =1              ! interval for writting trajectory fields (steps)
-integer:: ntrajstart =99999999  ! timestep to start writting trajectory fields
-integer:: ntrajend =99999999    ! timestep to end writting trajectory fields
-
-logical:: dotauz_tonly =.false. ! flag for using variable nudging for temperature
-logical:: dotauz_tq =.false.    ! flag for using variable nudging for moisture 
-real::    tauz1 = 1.e+6         ! height where variable strength nudging begins 
-real::    tauz2 = 1.e+6         ! height where nudging coefficient becomes 1
-real::    tauz_tau = 0.         ! time scale for nudging coefficient
-real::    tauzuv1 = 1.e+6       ! height where variable strength nudging begins 
-real::    tauzuv2 = 1.e+6       ! height where nudging coefficient becomes 1
-real::    tauz_uv = 0.          ! time scale for U and V nudging coefficient
 real::    itauz(nzm)
 
 ! END Add for ISDAC intercomparison

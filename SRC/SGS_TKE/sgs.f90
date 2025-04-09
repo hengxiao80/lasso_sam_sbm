@@ -353,8 +353,8 @@ subroutine sgs_scalars()
       ! --- Heng Xiao, 01/31/2025
       do k = 1,nmicro_fields
         if(   k.eq.index_water_vapor             &! transport water-vapor variable no metter what
-         .or. (docloud.and.flag_precip(k).ne.1)    & ! transport non-precipitation vars
-         .or. (doprecip.and.flag_precip(k).eq.1) ) then
+         .or. (docloud.and.flag_precip(k).ne.1)    & ! transport non-precipitation vars if docloud
+         .or. (doprecip.and.flag_precip(k).eq.1) ) then ! transport precipitation vars if doprecip
            fluxbtmp(1:nx,1:ny) = fluxbmk(1:nx,1:ny,k)
            fluxttmp(1:nx,1:ny) = fluxtmk(1:nx,1:ny,k)
            call diffuse_scalar(micro_field(:,:,:,k),fluxbtmp,fluxttmp, &

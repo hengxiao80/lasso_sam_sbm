@@ -21,7 +21,7 @@ character *3 binumber
 integer m
 
 
-! nfields= 16+1+3*33 ! number of 3D fields to save
+! nfields= 16+1+3*33 ! number of 3D fields to save, with squashed ice particle #s
 nfields= 16+1+2*33 ! number of 3D fields to save
 
 ! if(.not.docloud) nfields=nfields-1
@@ -147,13 +147,13 @@ end if ! masterproc.or.output_sep
   do k=1,nzm
    do j=1,ny
     do i=1,nx
-      tmp(i,j,k)=qt(i,j,k)*1000.*rho(k)
+      tmp(i,j,k)=qt(i,j,k)*1000.
     end do
    end do
   end do
   name='QT'
-  long_name='Total Water Vaper Content'
-  units='g/m^3'
+  long_name='Total Water (including all hydrometeors) Mixing Ratio'
+  units='g/kg'
   call compress3D(tmp,nx,ny,nzm,name,long_name,units, &
                                  save3Dbin,dompi,rank,nsubdomains)
 
@@ -189,13 +189,13 @@ end if ! masterproc.or.output_sep
   do k=1,nzm
    do j=1,ny
     do i=1,nx
-      tmp(i,j,k)=qc(i,j,k)*1000.*rho(k)
+      tmp(i,j,k)=qc(i,j,k)*1000.
     end do
    end do
   end do
-  name='QL'
-  long_name='Cloud Water Content'
-  units='g/m^3'
+  name='QC'
+  long_name='Cloud Water Mixing Ratio'
+  units='g/kg'
   call compress3D(tmp,nx,ny,nzm,name,long_name,units, &
                                  save3Dbin,dompi,rank,nsubdomains)
 
@@ -203,13 +203,13 @@ end if ! masterproc.or.output_sep
   do k=1,nzm
    do j=1,ny
     do i=1,nx
-      tmp(i,j,k)=qr(i,j,k)*1000.*rho(k)
+      tmp(i,j,k)=qr(i,j,k)*1000.
     end do
    end do
   end do
   name='QR'
-  long_name='Rain Water Content'
-  units='g/m^3'
+  long_name='Rain Water Mixing Ratio'
+  units='g/kg'
   call compress3D(tmp,nx,ny,nzm,name,long_name,units, &
                                  save3Dbin,dompi,rank,nsubdomains)
 
@@ -217,13 +217,13 @@ end if ! masterproc.or.output_sep
   do k=1,nzm
    do j=1,ny
     do i=1,nx
-      tmp(i,j,k)=qi(i,j,k)*1000.*rho(k)
+      tmp(i,j,k)=qi(i,j,k)*1000.
     end do
    end do
   end do
   name='QI'
-  long_name='Ice crystal Content'
-  units='g/m^3'
+  long_name='Cloud Ice Mixing Ratio'
+  units='g/kg'
   call compress3D(tmp,nx,ny,nzm,name,long_name,units, &
                                  save3Dbin,dompi,rank,nsubdomains)
 
@@ -231,13 +231,13 @@ end if ! masterproc.or.output_sep
   do k=1,nzm
    do j=1,ny
     do i=1,nx
-      tmp(i,j,k)=qs(i,j,k)*1000.*rho(k)
+      tmp(i,j,k)=qs(i,j,k)*1000.
     end do
    end do
   end do
   name='QS'
-  long_name='Snow Content'
-  units='g/m^3'
+  long_name='Snow Mixing Ratio'
+  units='g/kg'
   call compress3D(tmp,nx,ny,nzm,name,long_name,units, &
                                  save3Dbin,dompi,rank,nsubdomains)
 
@@ -245,13 +245,13 @@ end if ! masterproc.or.output_sep
   do k=1,nzm
    do j=1,ny
     do i=1,nx
-      tmp(i,j,k)=qg(i,j,k)*1000.*rho(k)
+      tmp(i,j,k)=qg(i,j,k)*1000.
     end do
    end do
   end do
   name='QG'
-  long_name='Graupel Content'
-  units='g/m^3'
+  long_name='Graupel Mixing Ratio'
+  units='g/kg'
   call compress3D(tmp,nx,ny,nzm,name,long_name,units, &
                                  save3Dbin,dompi,rank,nsubdomains)
 
@@ -259,13 +259,13 @@ end if ! masterproc.or.output_sep
   do k=1,nzm
    do j=1,ny
     do i=1,nx
-      tmp(i,j,k)=qh(i,j,k)*1000.*rho(k)
+      tmp(i,j,k)=qh(i,j,k)*1000.
     end do
    end do
   end do
   name='QH'
-  long_name='Hail Content'
-  units='g/m^3'
+  long_name='Hail Mixing Ratio'
+  units='g/kg'
   call compress3D(tmp,nx,ny,nzm,name,long_name,units, &
                                  save3Dbin,dompi,rank,nsubdomains)
 

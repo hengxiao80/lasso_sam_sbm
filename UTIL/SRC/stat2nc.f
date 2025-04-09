@@ -170,22 +170,22 @@ c--------------------------------------------------------
         tmp(1:ntime) = parms(npar:npar+nparms*(ntime-1):nparms)
         err = NF_PUT_VAR_REAL(ncid, varid, tmp)
         print*,long_name
-c--------------------------------------------------------
-        long_name = 'Cloud Fraction above 245K level'
-        abbr_name = 'CLD245'
-        units = ' '
-        npar = 5
-        err = NF_REDEF(ncid)
-        err = NF_DEF_VAR(ncid,trim(abbr_name),NF_FLOAT,
-     &                                  1, timeid,varid)
-        err = NF_PUT_ATT_TEXT(ncid,varid,'long_name',
-     &                  len_trim(long_name),trim(long_name))
-        err = NF_PUT_ATT_TEXT(ncid,varid,'units',
-     &                       len_trim(units),trim(units))
-        err = NF_ENDDEF(ncid)
-        tmp(1:ntime) = parms(npar:npar+nparms*(ntime-1):nparms)
-        err = NF_PUT_VAR_REAL(ncid, varid, tmp)
-        print*,long_name
+! c--------------------------------------------------------
+!         long_name = 'Cloud Fraction above 245K level'
+!         abbr_name = 'CLD245'
+!         units = ' '
+!         npar = 5
+!         err = NF_REDEF(ncid)
+!         err = NF_DEF_VAR(ncid,trim(abbr_name),NF_FLOAT,
+!      &                                  1, timeid,varid)
+!         err = NF_PUT_ATT_TEXT(ncid,varid,'long_name',
+!      &                  len_trim(long_name),trim(long_name))
+!         err = NF_PUT_ATT_TEXT(ncid,varid,'units',
+!      &                       len_trim(units),trim(units))
+!         err = NF_ENDDEF(ncid)
+!         tmp(1:ntime) = parms(npar:npar+nparms*(ntime-1):nparms)
+!         err = NF_PUT_VAR_REAL(ncid, varid, tmp)
+!         print*,long_name
 c--------------------------------------------------------
         long_name = 'Maximum Updraft Velocity'
         abbr_name = 'WMAX'
@@ -322,11 +322,11 @@ c----------------------------------------------------------
         long_name = 'Cloud Water Path'
         abbr_name = 'CWP'
         units = 'g/m2'
-        call HBUF_read(2,nzm,'QC',1,ntime,f,m)
+        call HBUF_read(2,nzm,'MQC',1,ntime,f,m)
         do i=1,ntime
          tmp(i)=0.
          do k=1,nzm-1
-          tmp(i)=tmp(i)+rho(k)*f(k+(i-1)*nzm)*dz(k)
+          tmp(i)=tmp(i)+f(k+(i-1)*nzm)*dz(k)
          end do
         end do
         err = NF_REDEF(ncid)
@@ -343,11 +343,11 @@ c----------------------------------------------------------
         long_name = 'Ice Water Path'
         abbr_name = 'IWP'
         units = 'g/m2'
-        call HBUF_read(2,nzm,'QI',1,ntime,f,m)
+        call HBUF_read(2,nzm,'MQI',1,ntime,f,m)
         do i=1,ntime
          tmp(i)=0.
          do k=1,nzm-1
-          tmp(i)=tmp(i)+rho(k)*f(k+(i-1)*nzm)*dz(k)
+          tmp(i)=tmp(i)+f(k+(i-1)*nzm)*dz(k)
          end do
         end do
         err = NF_REDEF(ncid)
@@ -364,11 +364,11 @@ c----------------------------------------------------------
         long_name = 'Rain Water Path'
         abbr_name = 'RWP'
         units = 'g/m2'
-        call HBUF_read(2,nzm,'QR',1,ntime,f,m)
+        call HBUF_read(2,nzm,'MQR',1,ntime,f,m)
         do i=1,ntime
          tmp(i)=0.
          do k=1,nzm-1
-          tmp(i)=tmp(i)+rho(k)*f(k+(i-1)*nzm)*dz(k)
+          tmp(i)=tmp(i)+f(k+(i-1)*nzm)*dz(k)
          end do
         end do
         err = NF_REDEF(ncid)
@@ -385,11 +385,11 @@ c----------------------------------------------------------
         long_name = 'Snow Water Path'
         abbr_name = 'SWP'
         units = 'g/m2'
-        call HBUF_read(2,nzm,'QS',1,ntime,f,m)
+        call HBUF_read(2,nzm,'MQS',1,ntime,f,m)
         do i=1,ntime
          tmp(i)=0.
          do k=1,nzm-1
-          tmp(i)=tmp(i)+rho(k)*f(k+(i-1)*nzm)*dz(k)
+          tmp(i)=tmp(i)+f(k+(i-1)*nzm)*dz(k)
          end do
         end do
         err = NF_REDEF(ncid)
@@ -406,11 +406,32 @@ c----------------------------------------------------------
         long_name = 'Grauple Water Path'
         abbr_name = 'GWP'
         units = 'g/m2'
-        call HBUF_read(2,nzm,'QG',1,ntime,f,m)
+        call HBUF_read(2,nzm,'MQG',1,ntime,f,m)
         do i=1,ntime
          tmp(i)=0.
          do k=1,nzm-1
-          tmp(i)=tmp(i)+rho(k)*f(k+(i-1)*nzm)*dz(k)
+          tmp(i)=tmp(i)+f(k+(i-1)*nzm)*dz(k)
+         end do
+        end do
+        err = NF_REDEF(ncid)
+        err = NF_DEF_VAR(ncid,trim(abbr_name),NF_FLOAT,
+     &                                  1, timeid,varid)
+        err = NF_PUT_ATT_TEXT(ncid,varid,'long_name',
+     &                  len_trim(long_name),trim(long_name))
+        err = NF_PUT_ATT_TEXT(ncid,varid,'units',
+     &                       len_trim(units),trim(units))
+        err = NF_ENDDEF(ncid)
+	err = NF_PUT_VAR_REAL(ncid, varid, tmp)
+        print*,long_name
+c----------------------------------------------------------
+        long_name = 'Hail Water Path'
+        abbr_name = 'HWP'
+        units = 'g/m2'
+        call HBUF_read(2,nzm,'MQH',1,ntime,f,m)
+        do i=1,ntime
+         tmp(i)=0.
+         do k=1,nzm-1
+          tmp(i)=tmp(i)+f(k+(i-1)*nzm)*dz(k)
          end do
         end do
         err = NF_REDEF(ncid)
@@ -785,508 +806,508 @@ c--------------------------------------------------------
         err = NF_PUT_VAR_REAL(ncid, varid, tmp)
         print*,long_name
 
-c--------------------------------------------------------
-        long_name = 'Low Cloud Fraction'
-        abbr_name = 'CLDLOW'
-        units = ' '
-	npar = 25
-        err = NF_REDEF(ncid)
-        err = NF_DEF_VAR(ncid,trim(abbr_name),NF_FLOAT,
-     &                                  1, timeid,varid)
-        err = NF_PUT_ATT_TEXT(ncid,varid,'long_name',
-     &                  len_trim(long_name),trim(long_name))
-        err = NF_PUT_ATT_TEXT(ncid,varid,'units',
-     &                       len_trim(units),trim(units))
-        err = NF_ENDDEF(ncid)
-        tmp(1:ntime) = parms(npar:npar+nparms*(ntime-1):nparms)
-        err = NF_PUT_VAR_REAL(ncid, varid, tmp)
-        print*,long_name
-c--------------------------------------------------------
-        long_name = 'Middle Cloud Fraction'
-        abbr_name = 'CLDMID'
-        units = ' '
-	npar = 26
-        err = NF_REDEF(ncid)
-        err = NF_DEF_VAR(ncid,trim(abbr_name),NF_FLOAT,
-     &                                  1, timeid,varid)
-        err = NF_PUT_ATT_TEXT(ncid,varid,'long_name',
-     &                  len_trim(long_name),trim(long_name))
-        err = NF_PUT_ATT_TEXT(ncid,varid,'units',
-     &                       len_trim(units),trim(units))
-        err = NF_ENDDEF(ncid)
-        tmp(1:ntime) = parms(npar:npar+nparms*(ntime-1):nparms)
-        err = NF_PUT_VAR_REAL(ncid, varid, tmp)
-        print*,long_name
-c--------------------------------------------------------
-        long_name = 'High Cloud Fraction'
-        abbr_name = 'CLDHI'
-        units = ' '
-	npar = 27
-        err = NF_REDEF(ncid)
-        err = NF_DEF_VAR(ncid,trim(abbr_name),NF_FLOAT,
-     &                                  1, timeid,varid)
-        err = NF_PUT_ATT_TEXT(ncid,varid,'long_name',
-     &                  len_trim(long_name),trim(long_name))
-        err = NF_PUT_ATT_TEXT(ncid,varid,'units',
-     &                       len_trim(units),trim(units))
-        err = NF_ENDDEF(ncid)
-        tmp(1:ntime) = parms(npar:npar+nparms*(ntime-1):nparms)
-        err = NF_PUT_VAR_REAL(ncid, varid, tmp)
-        print*,long_name
-c--------------------------------------------------------
-        long_name = 'ISCCP Total Cloud Fraction (tau > 0.3)'
-        abbr_name = 'ISCCPTOT'
-        units = ' '
-        npar = 28
-        err = NF_REDEF(ncid)
-        err = NF_DEF_VAR(ncid,trim(abbr_name),NF_FLOAT,
-     &                                  1, timeid,varid)
-        err = NF_PUT_ATT_TEXT(ncid,varid,'long_name',
-     &                  len_trim(long_name),trim(long_name))
-        err = NF_PUT_ATT_TEXT(ncid,varid,'units',
-     &                       len_trim(units),trim(units))
-        err = NF_PUT_ATT_REAL(ncid,varid,'_FillValue',
-     &                       NF_FLOAT,1,-1.)
-        err = NF_ENDDEF(ncid)
-        tmp(1:ntime) = parms(npar:npar+nparms*(ntime-1):nparms)
-        err = NF_PUT_VAR_REAL(ncid, varid, tmp)
-        print*,long_name
-c--------------------------------------------------------
-        long_name = 'ISCCP Low Cloud Fraction (tau > 0.3)'
-        abbr_name = 'ISCCPLOW'
-        units = ' '
-        npar = 29
-        err = NF_REDEF(ncid)
-        err = NF_DEF_VAR(ncid,trim(abbr_name),NF_FLOAT,
-     &                                  1, timeid,varid)
-        err = NF_PUT_ATT_TEXT(ncid,varid,'long_name',
-     &                  len_trim(long_name),trim(long_name))
-        err = NF_PUT_ATT_TEXT(ncid,varid,'units',
-     &                       len_trim(units),trim(units))
-        err = NF_PUT_ATT_REAL(ncid,varid,'_FillValue',
-     &                       NF_FLOAT,1,-1.)
-        err = NF_ENDDEF(ncid)
-        tmp(1:ntime) = parms(npar:npar+nparms*(ntime-1):nparms)
-        err = NF_PUT_VAR_REAL(ncid, varid, tmp)
-        print*,long_name
-c--------------------------------------------------------
-        long_name = 'ISCCP Middle Cloud Fraction (tau > 0.3)'
-        abbr_name = 'ISCCPMID'
-        units = ' '
-        npar =30 
-        err = NF_REDEF(ncid)
-        err = NF_DEF_VAR(ncid,trim(abbr_name),NF_FLOAT,
-     &                                  1, timeid,varid)
-        err = NF_PUT_ATT_TEXT(ncid,varid,'long_name',
-     &                  len_trim(long_name),trim(long_name))
-        err = NF_PUT_ATT_TEXT(ncid,varid,'units',
-     &                       len_trim(units),trim(units))
-        err = NF_PUT_ATT_REAL(ncid,varid,'_FillValue',
-     &                       NF_FLOAT,1,-1.)
-        err = NF_ENDDEF(ncid)
-        tmp(1:ntime) = parms(npar:npar+nparms*(ntime-1):nparms)
-        err = NF_PUT_VAR_REAL(ncid, varid, tmp)
-        print*,long_name
-c--------------------------------------------------------
-        long_name = 'ISCCP High Cloud Fraction (tau > 0.3)'
-        abbr_name = 'ISCCPHGH'
-        units = ' '
-        npar = 31
-        err = NF_REDEF(ncid)
-        err = NF_DEF_VAR(ncid,trim(abbr_name),NF_FLOAT,
-     &                                  1, timeid,varid)
-        err = NF_PUT_ATT_TEXT(ncid,varid,'long_name',
-     &                  len_trim(long_name),trim(long_name))
-        err = NF_PUT_ATT_TEXT(ncid,varid,'units',
-     &                       len_trim(units),trim(units))
-        err = NF_PUT_ATT_REAL(ncid,varid,'_FillValue',
-     &                       NF_FLOAT,1,-1.)
-        err = NF_ENDDEF(ncid)
-        tmp(1:ntime) = parms(npar:npar+nparms*(ntime-1):nparms)
-        err = NF_PUT_VAR_REAL(ncid, varid, tmp)
-        print*,long_name
+! c--------------------------------------------------------
+!         long_name = 'Low Cloud Fraction'
+!         abbr_name = 'CLDLOW'
+!         units = ' '
+! 	npar = 25
+!         err = NF_REDEF(ncid)
+!         err = NF_DEF_VAR(ncid,trim(abbr_name),NF_FLOAT,
+!      &                                  1, timeid,varid)
+!         err = NF_PUT_ATT_TEXT(ncid,varid,'long_name',
+!      &                  len_trim(long_name),trim(long_name))
+!         err = NF_PUT_ATT_TEXT(ncid,varid,'units',
+!      &                       len_trim(units),trim(units))
+!         err = NF_ENDDEF(ncid)
+!         tmp(1:ntime) = parms(npar:npar+nparms*(ntime-1):nparms)
+!         err = NF_PUT_VAR_REAL(ncid, varid, tmp)
+!         print*,long_name
+! c--------------------------------------------------------
+!         long_name = 'Middle Cloud Fraction'
+!         abbr_name = 'CLDMID'
+!         units = ' '
+! 	npar = 26
+!         err = NF_REDEF(ncid)
+!         err = NF_DEF_VAR(ncid,trim(abbr_name),NF_FLOAT,
+!      &                                  1, timeid,varid)
+!         err = NF_PUT_ATT_TEXT(ncid,varid,'long_name',
+!      &                  len_trim(long_name),trim(long_name))
+!         err = NF_PUT_ATT_TEXT(ncid,varid,'units',
+!      &                       len_trim(units),trim(units))
+!         err = NF_ENDDEF(ncid)
+!         tmp(1:ntime) = parms(npar:npar+nparms*(ntime-1):nparms)
+!         err = NF_PUT_VAR_REAL(ncid, varid, tmp)
+!         print*,long_name
+! c--------------------------------------------------------
+!         long_name = 'High Cloud Fraction'
+!         abbr_name = 'CLDHI'
+!         units = ' '
+! 	npar = 27
+!         err = NF_REDEF(ncid)
+!         err = NF_DEF_VAR(ncid,trim(abbr_name),NF_FLOAT,
+!      &                                  1, timeid,varid)
+!         err = NF_PUT_ATT_TEXT(ncid,varid,'long_name',
+!      &                  len_trim(long_name),trim(long_name))
+!         err = NF_PUT_ATT_TEXT(ncid,varid,'units',
+!      &                       len_trim(units),trim(units))
+!         err = NF_ENDDEF(ncid)
+!         tmp(1:ntime) = parms(npar:npar+nparms*(ntime-1):nparms)
+!         err = NF_PUT_VAR_REAL(ncid, varid, tmp)
+!         print*,long_name
+! c--------------------------------------------------------
+!         long_name = 'ISCCP Total Cloud Fraction (tau > 0.3)'
+!         abbr_name = 'ISCCPTOT'
+!         units = ' '
+!         npar = 28
+!         err = NF_REDEF(ncid)
+!         err = NF_DEF_VAR(ncid,trim(abbr_name),NF_FLOAT,
+!      &                                  1, timeid,varid)
+!         err = NF_PUT_ATT_TEXT(ncid,varid,'long_name',
+!      &                  len_trim(long_name),trim(long_name))
+!         err = NF_PUT_ATT_TEXT(ncid,varid,'units',
+!      &                       len_trim(units),trim(units))
+!         err = NF_PUT_ATT_REAL(ncid,varid,'_FillValue',
+!      &                       NF_FLOAT,1,-1.)
+!         err = NF_ENDDEF(ncid)
+!         tmp(1:ntime) = parms(npar:npar+nparms*(ntime-1):nparms)
+!         err = NF_PUT_VAR_REAL(ncid, varid, tmp)
+!         print*,long_name
+! c--------------------------------------------------------
+!         long_name = 'ISCCP Low Cloud Fraction (tau > 0.3)'
+!         abbr_name = 'ISCCPLOW'
+!         units = ' '
+!         npar = 29
+!         err = NF_REDEF(ncid)
+!         err = NF_DEF_VAR(ncid,trim(abbr_name),NF_FLOAT,
+!      &                                  1, timeid,varid)
+!         err = NF_PUT_ATT_TEXT(ncid,varid,'long_name',
+!      &                  len_trim(long_name),trim(long_name))
+!         err = NF_PUT_ATT_TEXT(ncid,varid,'units',
+!      &                       len_trim(units),trim(units))
+!         err = NF_PUT_ATT_REAL(ncid,varid,'_FillValue',
+!      &                       NF_FLOAT,1,-1.)
+!         err = NF_ENDDEF(ncid)
+!         tmp(1:ntime) = parms(npar:npar+nparms*(ntime-1):nparms)
+!         err = NF_PUT_VAR_REAL(ncid, varid, tmp)
+!         print*,long_name
+! c--------------------------------------------------------
+!         long_name = 'ISCCP Middle Cloud Fraction (tau > 0.3)'
+!         abbr_name = 'ISCCPMID'
+!         units = ' '
+!         npar =30 
+!         err = NF_REDEF(ncid)
+!         err = NF_DEF_VAR(ncid,trim(abbr_name),NF_FLOAT,
+!      &                                  1, timeid,varid)
+!         err = NF_PUT_ATT_TEXT(ncid,varid,'long_name',
+!      &                  len_trim(long_name),trim(long_name))
+!         err = NF_PUT_ATT_TEXT(ncid,varid,'units',
+!      &                       len_trim(units),trim(units))
+!         err = NF_PUT_ATT_REAL(ncid,varid,'_FillValue',
+!      &                       NF_FLOAT,1,-1.)
+!         err = NF_ENDDEF(ncid)
+!         tmp(1:ntime) = parms(npar:npar+nparms*(ntime-1):nparms)
+!         err = NF_PUT_VAR_REAL(ncid, varid, tmp)
+!         print*,long_name
+! c--------------------------------------------------------
+!         long_name = 'ISCCP High Cloud Fraction (tau > 0.3)'
+!         abbr_name = 'ISCCPHGH'
+!         units = ' '
+!         npar = 31
+!         err = NF_REDEF(ncid)
+!         err = NF_DEF_VAR(ncid,trim(abbr_name),NF_FLOAT,
+!      &                                  1, timeid,varid)
+!         err = NF_PUT_ATT_TEXT(ncid,varid,'long_name',
+!      &                  len_trim(long_name),trim(long_name))
+!         err = NF_PUT_ATT_TEXT(ncid,varid,'units',
+!      &                       len_trim(units),trim(units))
+!         err = NF_PUT_ATT_REAL(ncid,varid,'_FillValue',
+!      &                       NF_FLOAT,1,-1.)
+!         err = NF_ENDDEF(ncid)
+!         tmp(1:ntime) = parms(npar:npar+nparms*(ntime-1):nparms)
+!         err = NF_PUT_VAR_REAL(ncid, varid, tmp)
+!         print*,long_name
 
-c--------------------------------------------------------
-        long_name = 'MODIS Total Cloud Fraction'
-        abbr_name = 'MODISTOT'
-        units = ' '
-        npar = 32
-        err = NF_REDEF(ncid)
-        err = NF_DEF_VAR(ncid,trim(abbr_name),NF_FLOAT,
-     &                                  1, timeid,varid)
-        err = NF_PUT_ATT_TEXT(ncid,varid,'long_name',
-     &                  len_trim(long_name),trim(long_name))
-        err = NF_PUT_ATT_TEXT(ncid,varid,'units',
-     &                       len_trim(units),trim(units))
-        err = NF_PUT_ATT_REAL(ncid,varid,'_FillValue',
-     &                       NF_FLOAT,1,-1.)
-        err = NF_ENDDEF(ncid)
-        tmp(1:ntime) = parms(npar:npar+nparms*(ntime-1):nparms)
-        err = NF_PUT_VAR_REAL(ncid, varid, tmp)
-        print*,long_name
-c--------------------------------------------------------
-        long_name = 'MODIS Low Cloud Fraction'
-        abbr_name = 'MODISLOW'
-        units = ' '
-        npar = 33
-        err = NF_REDEF(ncid)
-        err = NF_DEF_VAR(ncid,trim(abbr_name),NF_FLOAT,
-     &                                  1, timeid,varid)
-        err = NF_PUT_ATT_TEXT(ncid,varid,'long_name',
-     &                  len_trim(long_name),trim(long_name))
-        err = NF_PUT_ATT_TEXT(ncid,varid,'units',
-     &                       len_trim(units),trim(units))
-        err = NF_PUT_ATT_REAL(ncid,varid,'_FillValue',
-     &                       NF_FLOAT,1,-1.)
-        err = NF_ENDDEF(ncid)
-        tmp(1:ntime) = parms(npar:npar+nparms*(ntime-1):nparms)
-        err = NF_PUT_VAR_REAL(ncid, varid, tmp)
-        print*,long_name
-c--------------------------------------------------------
-        long_name = 'MODIS Middle Cloud Fraction'
-        abbr_name = 'MODISMID'
-        units = ' '
-        npar = 34
-        err = NF_REDEF(ncid)
-        err = NF_DEF_VAR(ncid,trim(abbr_name),NF_FLOAT,
-     &                                  1, timeid,varid)
-        err = NF_PUT_ATT_TEXT(ncid,varid,'long_name',
-     &                  len_trim(long_name),trim(long_name))
-        err = NF_PUT_ATT_TEXT(ncid,varid,'units',
-     &                       len_trim(units),trim(units))
-        err = NF_PUT_ATT_REAL(ncid,varid,'_FillValue',
-     &                       NF_FLOAT,1,-1.)
-        err = NF_ENDDEF(ncid)
-        tmp(1:ntime) = parms(npar:npar+nparms*(ntime-1):nparms)
-        err = NF_PUT_VAR_REAL(ncid, varid, tmp)
-        print*,long_name
-c--------------------------------------------------------
-        long_name = 'MODIS High Cloud Fraction (tau > 0.3)'
-        abbr_name = 'MODISHGH'
-        units = ' '
-        npar = 35
-        err = NF_REDEF(ncid)
-        err = NF_DEF_VAR(ncid,trim(abbr_name),NF_FLOAT,
-     &                                  1, timeid,varid)
-        err = NF_PUT_ATT_TEXT(ncid,varid,'long_name',
-     &                  len_trim(long_name),trim(long_name))
-        err = NF_PUT_ATT_TEXT(ncid,varid,'units',
-     &                       len_trim(units),trim(units))
-        err = NF_PUT_ATT_REAL(ncid,varid,'_FillValue',
-     &                       NF_FLOAT,1,-1.)
-        err = NF_ENDDEF(ncid)
-        tmp(1:ntime) = parms(npar:npar+nparms*(ntime-1):nparms)
-        err = NF_PUT_VAR_REAL(ncid, varid, tmp)
-        print*,long_name
-c--------------------------------------------------------
-        long_name = 'MISR Total Cloud Fraction'
-        abbr_name = 'MISRTOT'
-        units = ' '
-        npar = 36
-        err = NF_REDEF(ncid)
-        err = NF_DEF_VAR(ncid,trim(abbr_name),NF_FLOAT,
-     &                                  1, timeid,varid)
-        err = NF_PUT_ATT_TEXT(ncid,varid,'long_name',
-     &                  len_trim(long_name),trim(long_name))
-        err = NF_PUT_ATT_TEXT(ncid,varid,'units',
-     &                       len_trim(units),trim(units))
-        err = NF_PUT_ATT_REAL(ncid,varid,'_FillValue',
-     &                       NF_FLOAT,1,-1.)
-        err = NF_ENDDEF(ncid)
-        tmp(1:ntime) = parms(npar:npar+nparms*(ntime-1):nparms)
-        err = NF_PUT_VAR_REAL(ncid, varid, tmp)
-        print*,long_name
+! c--------------------------------------------------------
+!         long_name = 'MODIS Total Cloud Fraction'
+!         abbr_name = 'MODISTOT'
+!         units = ' '
+!         npar = 32
+!         err = NF_REDEF(ncid)
+!         err = NF_DEF_VAR(ncid,trim(abbr_name),NF_FLOAT,
+!      &                                  1, timeid,varid)
+!         err = NF_PUT_ATT_TEXT(ncid,varid,'long_name',
+!      &                  len_trim(long_name),trim(long_name))
+!         err = NF_PUT_ATT_TEXT(ncid,varid,'units',
+!      &                       len_trim(units),trim(units))
+!         err = NF_PUT_ATT_REAL(ncid,varid,'_FillValue',
+!      &                       NF_FLOAT,1,-1.)
+!         err = NF_ENDDEF(ncid)
+!         tmp(1:ntime) = parms(npar:npar+nparms*(ntime-1):nparms)
+!         err = NF_PUT_VAR_REAL(ncid, varid, tmp)
+!         print*,long_name
+! c--------------------------------------------------------
+!         long_name = 'MODIS Low Cloud Fraction'
+!         abbr_name = 'MODISLOW'
+!         units = ' '
+!         npar = 33
+!         err = NF_REDEF(ncid)
+!         err = NF_DEF_VAR(ncid,trim(abbr_name),NF_FLOAT,
+!      &                                  1, timeid,varid)
+!         err = NF_PUT_ATT_TEXT(ncid,varid,'long_name',
+!      &                  len_trim(long_name),trim(long_name))
+!         err = NF_PUT_ATT_TEXT(ncid,varid,'units',
+!      &                       len_trim(units),trim(units))
+!         err = NF_PUT_ATT_REAL(ncid,varid,'_FillValue',
+!      &                       NF_FLOAT,1,-1.)
+!         err = NF_ENDDEF(ncid)
+!         tmp(1:ntime) = parms(npar:npar+nparms*(ntime-1):nparms)
+!         err = NF_PUT_VAR_REAL(ncid, varid, tmp)
+!         print*,long_name
+! c--------------------------------------------------------
+!         long_name = 'MODIS Middle Cloud Fraction'
+!         abbr_name = 'MODISMID'
+!         units = ' '
+!         npar = 34
+!         err = NF_REDEF(ncid)
+!         err = NF_DEF_VAR(ncid,trim(abbr_name),NF_FLOAT,
+!      &                                  1, timeid,varid)
+!         err = NF_PUT_ATT_TEXT(ncid,varid,'long_name',
+!      &                  len_trim(long_name),trim(long_name))
+!         err = NF_PUT_ATT_TEXT(ncid,varid,'units',
+!      &                       len_trim(units),trim(units))
+!         err = NF_PUT_ATT_REAL(ncid,varid,'_FillValue',
+!      &                       NF_FLOAT,1,-1.)
+!         err = NF_ENDDEF(ncid)
+!         tmp(1:ntime) = parms(npar:npar+nparms*(ntime-1):nparms)
+!         err = NF_PUT_VAR_REAL(ncid, varid, tmp)
+!         print*,long_name
+! c--------------------------------------------------------
+!         long_name = 'MODIS High Cloud Fraction (tau > 0.3)'
+!         abbr_name = 'MODISHGH'
+!         units = ' '
+!         npar = 35
+!         err = NF_REDEF(ncid)
+!         err = NF_DEF_VAR(ncid,trim(abbr_name),NF_FLOAT,
+!      &                                  1, timeid,varid)
+!         err = NF_PUT_ATT_TEXT(ncid,varid,'long_name',
+!      &                  len_trim(long_name),trim(long_name))
+!         err = NF_PUT_ATT_TEXT(ncid,varid,'units',
+!      &                       len_trim(units),trim(units))
+!         err = NF_PUT_ATT_REAL(ncid,varid,'_FillValue',
+!      &                       NF_FLOAT,1,-1.)
+!         err = NF_ENDDEF(ncid)
+!         tmp(1:ntime) = parms(npar:npar+nparms*(ntime-1):nparms)
+!         err = NF_PUT_VAR_REAL(ncid, varid, tmp)
+!         print*,long_name
+! c--------------------------------------------------------
+!         long_name = 'MISR Total Cloud Fraction'
+!         abbr_name = 'MISRTOT'
+!         units = ' '
+!         npar = 36
+!         err = NF_REDEF(ncid)
+!         err = NF_DEF_VAR(ncid,trim(abbr_name),NF_FLOAT,
+!      &                                  1, timeid,varid)
+!         err = NF_PUT_ATT_TEXT(ncid,varid,'long_name',
+!      &                  len_trim(long_name),trim(long_name))
+!         err = NF_PUT_ATT_TEXT(ncid,varid,'units',
+!      &                       len_trim(units),trim(units))
+!         err = NF_PUT_ATT_REAL(ncid,varid,'_FillValue',
+!      &                       NF_FLOAT,1,-1.)
+!         err = NF_ENDDEF(ncid)
+!         tmp(1:ntime) = parms(npar:npar+nparms*(ntime-1):nparms)
+!         err = NF_PUT_VAR_REAL(ncid, varid, tmp)
+!         print*,long_name
 
-c--------------------------------------------------------
-        long_name = 'MODIS Effective Radius (Liquid)'
-        abbr_name = 'MODISREL'
-        units = 'mkm'
-        npar = 37
-        err = NF_REDEF(ncid)
-        err = NF_DEF_VAR(ncid,trim(abbr_name),NF_FLOAT,
-     &                                  1, timeid,varid)
-        err = NF_PUT_ATT_TEXT(ncid,varid,'long_name',
-     &                  len_trim(long_name),trim(long_name))
-        err = NF_PUT_ATT_TEXT(ncid,varid,'units',
-     &                       len_trim(units),trim(units))
-        err = NF_PUT_ATT_REAL(ncid,varid,'_FillValue',
-     &                       NF_FLOAT,1,-1.)
-        err = NF_ENDDEF(ncid)
-        tmp(1:ntime) = parms(npar:npar+nparms*(ntime-1):nparms)
-        err = NF_PUT_VAR_REAL(ncid, varid, tmp)
-        print*,long_name
+! c--------------------------------------------------------
+!         long_name = 'MODIS Effective Radius (Liquid)'
+!         abbr_name = 'MODISREL'
+!         units = 'mkm'
+!         npar = 37
+!         err = NF_REDEF(ncid)
+!         err = NF_DEF_VAR(ncid,trim(abbr_name),NF_FLOAT,
+!      &                                  1, timeid,varid)
+!         err = NF_PUT_ATT_TEXT(ncid,varid,'long_name',
+!      &                  len_trim(long_name),trim(long_name))
+!         err = NF_PUT_ATT_TEXT(ncid,varid,'units',
+!      &                       len_trim(units),trim(units))
+!         err = NF_PUT_ATT_REAL(ncid,varid,'_FillValue',
+!      &                       NF_FLOAT,1,-1.)
+!         err = NF_ENDDEF(ncid)
+!         tmp(1:ntime) = parms(npar:npar+nparms*(ntime-1):nparms)
+!         err = NF_PUT_VAR_REAL(ncid, varid, tmp)
+!         print*,long_name
 
-c--------------------------------------------------------
-        long_name = 'MODIS Effective Radius (Ice)'
-        abbr_name = 'MODISREI'
-        units = 'mkm'
-        npar = 38
-        err = NF_REDEF(ncid)
-        err = NF_DEF_VAR(ncid,trim(abbr_name),NF_FLOAT,
-     &                                  1, timeid,varid)
-        err = NF_PUT_ATT_TEXT(ncid,varid,'long_name',
-     &                  len_trim(long_name),trim(long_name))
-        err = NF_PUT_ATT_TEXT(ncid,varid,'units',
-     &                       len_trim(units),trim(units))
-        err = NF_PUT_ATT_REAL(ncid,varid,'_FillValue',
-     &                       NF_FLOAT,1,-1.)
-        err = NF_ENDDEF(ncid)
-        tmp(1:ntime) = parms(npar:npar+nparms*(ntime-1):nparms)
-        err = NF_PUT_VAR_REAL(ncid, varid, tmp)
-        print*,long_name
+! c--------------------------------------------------------
+!         long_name = 'MODIS Effective Radius (Ice)'
+!         abbr_name = 'MODISREI'
+!         units = 'mkm'
+!         npar = 38
+!         err = NF_REDEF(ncid)
+!         err = NF_DEF_VAR(ncid,trim(abbr_name),NF_FLOAT,
+!      &                                  1, timeid,varid)
+!         err = NF_PUT_ATT_TEXT(ncid,varid,'long_name',
+!      &                  len_trim(long_name),trim(long_name))
+!         err = NF_PUT_ATT_TEXT(ncid,varid,'units',
+!      &                       len_trim(units),trim(units))
+!         err = NF_PUT_ATT_REAL(ncid,varid,'_FillValue',
+!      &                       NF_FLOAT,1,-1.)
+!         err = NF_ENDDEF(ncid)
+!         tmp(1:ntime) = parms(npar:npar+nparms*(ntime-1):nparms)
+!         err = NF_PUT_VAR_REAL(ncid, varid, tmp)
+!         print*,long_name
 
-c--------------------------------------------------------
-        long_name = 'MODIS Liquid Water Path'
-        abbr_name = 'MODISLWP'
-        units = 'g/m2'
-        npar = 39
-        err = NF_REDEF(ncid)
-        err = NF_DEF_VAR(ncid,trim(abbr_name),NF_FLOAT,
-     &                                  1, timeid,varid)
-        err = NF_PUT_ATT_TEXT(ncid,varid,'long_name',
-     &                  len_trim(long_name),trim(long_name))
-        err = NF_PUT_ATT_TEXT(ncid,varid,'units',
-     &                       len_trim(units),trim(units))
-        err = NF_PUT_ATT_REAL(ncid,varid,'_FillValue',
-     &                       NF_FLOAT,1,-1.)
-        err = NF_ENDDEF(ncid)
-        tmp(1:ntime) = parms(npar:npar+nparms*(ntime-1):nparms)
-        err = NF_PUT_VAR_REAL(ncid, varid, tmp)
-        print*,long_name
-c--------------------------------------------------------
-        long_name = 'MODIS Ice Water Path'
-        abbr_name = 'MODISIWP'
-        units = 'g/m2'
-        npar = 40
-        err = NF_REDEF(ncid)
-        err = NF_DEF_VAR(ncid,trim(abbr_name),NF_FLOAT,
-     &                                  1, timeid,varid)
-        err = NF_PUT_ATT_TEXT(ncid,varid,'long_name',
-     &                  len_trim(long_name),trim(long_name))
-        err = NF_PUT_ATT_TEXT(ncid,varid,'units',
-     &                       len_trim(units),trim(units))
-        err = NF_PUT_ATT_REAL(ncid,varid,'_FillValue',
-     &                       NF_FLOAT,1,-1.)
-        err = NF_ENDDEF(ncid)
-        tmp(1:ntime) = parms(npar:npar+nparms*(ntime-1):nparms)
-        err = NF_PUT_VAR_REAL(ncid, varid, tmp)
-        print*,long_name
-c--------------------------------------------------------
-        long_name = 'ISCCP Brightness Temperature'
-        abbr_name = 'ISCCPTB'
-        units = 'K'
-        npar = 41
-        err = NF_REDEF(ncid)
-        err = NF_DEF_VAR(ncid,trim(abbr_name),NF_FLOAT,
-     &                                  1, timeid,varid)
-        err = NF_PUT_ATT_TEXT(ncid,varid,'long_name',
-     &                  len_trim(long_name),trim(long_name))
-        err = NF_PUT_ATT_TEXT(ncid,varid,'units',
-     &                       len_trim(units),trim(units))
-        err = NF_PUT_ATT_REAL(ncid,varid,'_FillValue',
-     &                       NF_FLOAT,1,-1.)
-        err = NF_ENDDEF(ncid)
-        tmp(1:ntime) = parms(npar:npar+nparms*(ntime-1):nparms)
-        err = NF_PUT_VAR_REAL(ncid, varid, tmp)
-        print*,long_name
-c--------------------------------------------------------
-        long_name = 'ISCCP Brightness Temperature (Clear Sky)'
-        abbr_name = 'ISCCPTBCLR'
-        units = 'K'
-        npar = 42
-        err = NF_REDEF(ncid)
-        err = NF_DEF_VAR(ncid,trim(abbr_name),NF_FLOAT,
-     &                                  1, timeid,varid)
-        err = NF_PUT_ATT_TEXT(ncid,varid,'long_name',
-     &                  len_trim(long_name),trim(long_name))
-        err = NF_PUT_ATT_TEXT(ncid,varid,'units',
-     &                       len_trim(units),trim(units))
-        err = NF_PUT_ATT_REAL(ncid,varid,'_FillValue',
-     &                       NF_FLOAT,1,-1.)
-        err = NF_ENDDEF(ncid)
-        tmp(1:ntime) = parms(npar:npar+nparms*(ntime-1):nparms)
-        err = NF_PUT_VAR_REAL(ncid, varid, tmp)
-        print*,long_name
-c--------------------------------------------------------
-        long_name = 'MODIS Total Fraction (Liquid)'
-        abbr_name = 'MODISTOTL'
-        units = ' '
-        npar = 43
-        err = NF_REDEF(ncid)
-        err = NF_DEF_VAR(ncid,trim(abbr_name),NF_FLOAT,
-     &                                  1, timeid,varid)
-        err = NF_PUT_ATT_TEXT(ncid,varid,'long_name',
-     &                  len_trim(long_name),trim(long_name))
-        err = NF_PUT_ATT_TEXT(ncid,varid,'units',
-     &                       len_trim(units),trim(units))
-        err = NF_PUT_ATT_REAL(ncid,varid,'_FillValue',
-     &                       NF_FLOAT,1,-1.)
-        err = NF_ENDDEF(ncid)
-        tmp(1:ntime) = parms(npar:npar+nparms*(ntime-1):nparms)
-        err = NF_PUT_VAR_REAL(ncid, varid, tmp)
-        print*,long_name
-c--------------------------------------------------------
-        long_name = 'MODIS Total Fraction (Ice)'
-        abbr_name = 'MODISTOTI'
-        units = ' '
-        npar = 44            
-        err = NF_REDEF(ncid)
-        err = NF_DEF_VAR(ncid,trim(abbr_name),NF_FLOAT,
-     &                                  1, timeid,varid)
-        err = NF_PUT_ATT_TEXT(ncid,varid,'long_name',
-     &                  len_trim(long_name),trim(long_name))
-        err = NF_PUT_ATT_TEXT(ncid,varid,'units',
-     &                       len_trim(units),trim(units))
-        err = NF_PUT_ATT_REAL(ncid,varid,'_FillValue',
-     &                       NF_FLOAT,1,-1.)
-        err = NF_ENDDEF(ncid)
-        tmp(1:ntime) = parms(npar:npar+nparms*(ntime-1):nparms)
-        err = NF_PUT_VAR_REAL(ncid, varid, tmp)
-        print*,long_name                
-c--------------------------------------------------------
-        long_name = 'ISCCP Optical Path'
-        abbr_name = 'ISCCPTAU'
-        units = ' '
-        npar = 45
-        err = NF_REDEF(ncid)
-        err = NF_DEF_VAR(ncid,trim(abbr_name),NF_FLOAT,
-     &                                  1, timeid,varid)
-        err = NF_PUT_ATT_TEXT(ncid,varid,'long_name',
-     &                  len_trim(long_name),trim(long_name))
-        err = NF_PUT_ATT_TEXT(ncid,varid,'units',
-     &                       len_trim(units),trim(units))
-        err = NF_PUT_ATT_REAL(ncid,varid,'_FillValue',
-     &                       NF_FLOAT,1,-1.)
-        err = NF_ENDDEF(ncid)
-        tmp(1:ntime) = parms(npar:npar+nparms*(ntime-1):nparms)
-        err = NF_PUT_VAR_REAL(ncid, varid, tmp)
-        print*,long_name
-c--------------------------------------------------------
-        long_name = 'ISCCP Cloud Albedo'
-        abbr_name = 'ISCCPALB'
-        units = ' '
-        npar = 46
-        err = NF_REDEF(ncid)
-        err = NF_DEF_VAR(ncid,trim(abbr_name),NF_FLOAT,
-     &                                  1, timeid,varid)
-        err = NF_PUT_ATT_TEXT(ncid,varid,'long_name',
-     &                  len_trim(long_name),trim(long_name))
-        err = NF_PUT_ATT_TEXT(ncid,varid,'units',
-     &                       len_trim(units),trim(units))
-        err = NF_PUT_ATT_REAL(ncid,varid,'_FillValue',
-     &                       NF_FLOAT,1,-1.)
-        err = NF_ENDDEF(ncid)
-        tmp(1:ntime) = parms(npar:npar+nparms*(ntime-1):nparms)
-        err = NF_PUT_VAR_REAL(ncid, varid, tmp)
-        print*,long_name
-c--------------------------------------------------------
-        long_name = 'ISCCP Cloud-Top Pressure'
-        abbr_name = 'ISCCPPTOP'
-        units = 'mb'
-        npar = 47
-        err = NF_REDEF(ncid)
-        err = NF_DEF_VAR(ncid,trim(abbr_name),NF_FLOAT,
-     &                                  1, timeid,varid)
-        err = NF_PUT_ATT_TEXT(ncid,varid,'long_name',
-     &                  len_trim(long_name),trim(long_name))
-        err = NF_PUT_ATT_TEXT(ncid,varid,'units',
-     &                       len_trim(units),trim(units))
-        err = NF_PUT_ATT_REAL(ncid,varid,'_FillValue',
-     &                       NF_FLOAT,1,-1.)
-        err = NF_ENDDEF(ncid)
-        tmp(1:ntime) = parms(npar:npar+nparms*(ntime-1):nparms)
-        err = NF_PUT_VAR_REAL(ncid, varid, tmp)
-        print*,long_name
-c--------------------------------------------------------
-        long_name = 'MODIS Cloud Optical Path'
-        abbr_name = 'MODISTAU'
-        units = ' '
-        npar = 48
-        err = NF_REDEF(ncid)
-        err = NF_DEF_VAR(ncid,trim(abbr_name),NF_FLOAT,
-     &                                  1, timeid,varid)
-        err = NF_PUT_ATT_TEXT(ncid,varid,'long_name',
-     &                  len_trim(long_name),trim(long_name))
-        err = NF_PUT_ATT_TEXT(ncid,varid,'units',
-     &                       len_trim(units),trim(units))
-        err = NF_PUT_ATT_REAL(ncid,varid,'_FillValue',
-     &                       NF_FLOAT,1,-1.)
-        err = NF_ENDDEF(ncid)
-        tmp(1:ntime) = parms(npar:npar+nparms*(ntime-1):nparms)
-        err = NF_PUT_VAR_REAL(ncid, varid, tmp)
-        print*,long_name
-c--------------------------------------------------------
-        long_name = 'MODIS Cloud Optical Path (Liquid)'
-        abbr_name = 'MODISTAUL'
-        units = ' '
-        npar = 49
-        err = NF_REDEF(ncid)
-        err = NF_DEF_VAR(ncid,trim(abbr_name),NF_FLOAT,
-     &                                  1, timeid,varid)
-        err = NF_PUT_ATT_TEXT(ncid,varid,'long_name',
-     &                  len_trim(long_name),trim(long_name))
-        err = NF_PUT_ATT_TEXT(ncid,varid,'units',
-     &                       len_trim(units),trim(units))
-        err = NF_PUT_ATT_REAL(ncid,varid,'_FillValue',
-     &                       NF_FLOAT,1,-1.)
-        err = NF_ENDDEF(ncid)
-        tmp(1:ntime) = parms(npar:npar+nparms*(ntime-1):nparms)
-        err = NF_PUT_VAR_REAL(ncid, varid, tmp)
-        print*,long_name
-c--------------------------------------------------------
-        long_name = 'MODIS Cloud Optical Path (Ice)'
-        abbr_name = 'MODISTAUI'
-        units = ' '
-        npar = 50
-        err = NF_REDEF(ncid)
-        err = NF_DEF_VAR(ncid,trim(abbr_name),NF_FLOAT,
-     &                                  1, timeid,varid)
-        err = NF_PUT_ATT_TEXT(ncid,varid,'long_name',
-     &                  len_trim(long_name),trim(long_name))
-        err = NF_PUT_ATT_TEXT(ncid,varid,'units',
-     &                       len_trim(units),trim(units))
-        err = NF_PUT_ATT_REAL(ncid,varid,'_FillValue',
-     &                       NF_FLOAT,1,-1.)
-        err = NF_ENDDEF(ncid)
-        tmp(1:ntime) = parms(npar:npar+nparms*(ntime-1):nparms)
-        err = NF_PUT_VAR_REAL(ncid, varid, tmp)
-        print*,long_name
-c--------------------------------------------------------
-        long_name = 'MODIS Cloud-Top Pressure'
-        abbr_name = 'MODISPTOP'
-        units = 'mb'
-        npar = 51
-        err = NF_REDEF(ncid)
-        err = NF_DEF_VAR(ncid,trim(abbr_name),NF_FLOAT,
-     &                                  1, timeid,varid)
-        err = NF_PUT_ATT_TEXT(ncid,varid,'long_name',
-     &                  len_trim(long_name),trim(long_name))
-        err = NF_PUT_ATT_TEXT(ncid,varid,'units',
-     &                       len_trim(units),trim(units))
-        err = NF_PUT_ATT_REAL(ncid,varid,'_FillValue',
-     &                       NF_FLOAT,1,-1.)
-        err = NF_ENDDEF(ncid)
-        tmp(1:ntime) = parms(npar:npar+nparms*(ntime-1):nparms)
-        err = NF_PUT_VAR_REAL(ncid, varid, tmp)
-        print*,long_name
-c--------------------------------------------------------
-        long_name = 'MISR Cloud-Top Height'
-        abbr_name = 'MISRZTOP'
-        units = 'km'
-        npar = 52
-        err = NF_REDEF(ncid)
-        err = NF_DEF_VAR(ncid,trim(abbr_name),NF_FLOAT,
-     &                                  1, timeid,varid)
-        err = NF_PUT_ATT_TEXT(ncid,varid,'long_name',
-     &                  len_trim(long_name),trim(long_name))
-        err = NF_PUT_ATT_TEXT(ncid,varid,'units',
-     &                       len_trim(units),trim(units))
-        err = NF_PUT_ATT_REAL(ncid,varid,'_FillValue',
-     &                       NF_FLOAT,1,-1.)
-        err = NF_ENDDEF(ncid)
-        tmp(1:ntime) = 0.001*parms(npar:npar+nparms*(ntime-1):nparms)
-        err = NF_PUT_VAR_REAL(ncid, varid, tmp)
-        print*,long_name
+! c--------------------------------------------------------
+!         long_name = 'MODIS Liquid Water Path'
+!         abbr_name = 'MODISLWP'
+!         units = 'g/m2'
+!         npar = 39
+!         err = NF_REDEF(ncid)
+!         err = NF_DEF_VAR(ncid,trim(abbr_name),NF_FLOAT,
+!      &                                  1, timeid,varid)
+!         err = NF_PUT_ATT_TEXT(ncid,varid,'long_name',
+!      &                  len_trim(long_name),trim(long_name))
+!         err = NF_PUT_ATT_TEXT(ncid,varid,'units',
+!      &                       len_trim(units),trim(units))
+!         err = NF_PUT_ATT_REAL(ncid,varid,'_FillValue',
+!      &                       NF_FLOAT,1,-1.)
+!         err = NF_ENDDEF(ncid)
+!         tmp(1:ntime) = parms(npar:npar+nparms*(ntime-1):nparms)
+!         err = NF_PUT_VAR_REAL(ncid, varid, tmp)
+!         print*,long_name
+! c--------------------------------------------------------
+!         long_name = 'MODIS Ice Water Path'
+!         abbr_name = 'MODISIWP'
+!         units = 'g/m2'
+!         npar = 40
+!         err = NF_REDEF(ncid)
+!         err = NF_DEF_VAR(ncid,trim(abbr_name),NF_FLOAT,
+!      &                                  1, timeid,varid)
+!         err = NF_PUT_ATT_TEXT(ncid,varid,'long_name',
+!      &                  len_trim(long_name),trim(long_name))
+!         err = NF_PUT_ATT_TEXT(ncid,varid,'units',
+!      &                       len_trim(units),trim(units))
+!         err = NF_PUT_ATT_REAL(ncid,varid,'_FillValue',
+!      &                       NF_FLOAT,1,-1.)
+!         err = NF_ENDDEF(ncid)
+!         tmp(1:ntime) = parms(npar:npar+nparms*(ntime-1):nparms)
+!         err = NF_PUT_VAR_REAL(ncid, varid, tmp)
+!         print*,long_name
+! c--------------------------------------------------------
+!         long_name = 'ISCCP Brightness Temperature'
+!         abbr_name = 'ISCCPTB'
+!         units = 'K'
+!         npar = 41
+!         err = NF_REDEF(ncid)
+!         err = NF_DEF_VAR(ncid,trim(abbr_name),NF_FLOAT,
+!      &                                  1, timeid,varid)
+!         err = NF_PUT_ATT_TEXT(ncid,varid,'long_name',
+!      &                  len_trim(long_name),trim(long_name))
+!         err = NF_PUT_ATT_TEXT(ncid,varid,'units',
+!      &                       len_trim(units),trim(units))
+!         err = NF_PUT_ATT_REAL(ncid,varid,'_FillValue',
+!      &                       NF_FLOAT,1,-1.)
+!         err = NF_ENDDEF(ncid)
+!         tmp(1:ntime) = parms(npar:npar+nparms*(ntime-1):nparms)
+!         err = NF_PUT_VAR_REAL(ncid, varid, tmp)
+!         print*,long_name
+! c--------------------------------------------------------
+!         long_name = 'ISCCP Brightness Temperature (Clear Sky)'
+!         abbr_name = 'ISCCPTBCLR'
+!         units = 'K'
+!         npar = 42
+!         err = NF_REDEF(ncid)
+!         err = NF_DEF_VAR(ncid,trim(abbr_name),NF_FLOAT,
+!      &                                  1, timeid,varid)
+!         err = NF_PUT_ATT_TEXT(ncid,varid,'long_name',
+!      &                  len_trim(long_name),trim(long_name))
+!         err = NF_PUT_ATT_TEXT(ncid,varid,'units',
+!      &                       len_trim(units),trim(units))
+!         err = NF_PUT_ATT_REAL(ncid,varid,'_FillValue',
+!      &                       NF_FLOAT,1,-1.)
+!         err = NF_ENDDEF(ncid)
+!         tmp(1:ntime) = parms(npar:npar+nparms*(ntime-1):nparms)
+!         err = NF_PUT_VAR_REAL(ncid, varid, tmp)
+!         print*,long_name
+! c--------------------------------------------------------
+!         long_name = 'MODIS Total Fraction (Liquid)'
+!         abbr_name = 'MODISTOTL'
+!         units = ' '
+!         npar = 43
+!         err = NF_REDEF(ncid)
+!         err = NF_DEF_VAR(ncid,trim(abbr_name),NF_FLOAT,
+!      &                                  1, timeid,varid)
+!         err = NF_PUT_ATT_TEXT(ncid,varid,'long_name',
+!      &                  len_trim(long_name),trim(long_name))
+!         err = NF_PUT_ATT_TEXT(ncid,varid,'units',
+!      &                       len_trim(units),trim(units))
+!         err = NF_PUT_ATT_REAL(ncid,varid,'_FillValue',
+!      &                       NF_FLOAT,1,-1.)
+!         err = NF_ENDDEF(ncid)
+!         tmp(1:ntime) = parms(npar:npar+nparms*(ntime-1):nparms)
+!         err = NF_PUT_VAR_REAL(ncid, varid, tmp)
+!         print*,long_name
+! c--------------------------------------------------------
+!         long_name = 'MODIS Total Fraction (Ice)'
+!         abbr_name = 'MODISTOTI'
+!         units = ' '
+!         npar = 44            
+!         err = NF_REDEF(ncid)
+!         err = NF_DEF_VAR(ncid,trim(abbr_name),NF_FLOAT,
+!      &                                  1, timeid,varid)
+!         err = NF_PUT_ATT_TEXT(ncid,varid,'long_name',
+!      &                  len_trim(long_name),trim(long_name))
+!         err = NF_PUT_ATT_TEXT(ncid,varid,'units',
+!      &                       len_trim(units),trim(units))
+!         err = NF_PUT_ATT_REAL(ncid,varid,'_FillValue',
+!      &                       NF_FLOAT,1,-1.)
+!         err = NF_ENDDEF(ncid)
+!         tmp(1:ntime) = parms(npar:npar+nparms*(ntime-1):nparms)
+!         err = NF_PUT_VAR_REAL(ncid, varid, tmp)
+!         print*,long_name                
+! c--------------------------------------------------------
+!         long_name = 'ISCCP Optical Path'
+!         abbr_name = 'ISCCPTAU'
+!         units = ' '
+!         npar = 45
+!         err = NF_REDEF(ncid)
+!         err = NF_DEF_VAR(ncid,trim(abbr_name),NF_FLOAT,
+!      &                                  1, timeid,varid)
+!         err = NF_PUT_ATT_TEXT(ncid,varid,'long_name',
+!      &                  len_trim(long_name),trim(long_name))
+!         err = NF_PUT_ATT_TEXT(ncid,varid,'units',
+!      &                       len_trim(units),trim(units))
+!         err = NF_PUT_ATT_REAL(ncid,varid,'_FillValue',
+!      &                       NF_FLOAT,1,-1.)
+!         err = NF_ENDDEF(ncid)
+!         tmp(1:ntime) = parms(npar:npar+nparms*(ntime-1):nparms)
+!         err = NF_PUT_VAR_REAL(ncid, varid, tmp)
+!         print*,long_name
+! c--------------------------------------------------------
+!         long_name = 'ISCCP Cloud Albedo'
+!         abbr_name = 'ISCCPALB'
+!         units = ' '
+!         npar = 46
+!         err = NF_REDEF(ncid)
+!         err = NF_DEF_VAR(ncid,trim(abbr_name),NF_FLOAT,
+!      &                                  1, timeid,varid)
+!         err = NF_PUT_ATT_TEXT(ncid,varid,'long_name',
+!      &                  len_trim(long_name),trim(long_name))
+!         err = NF_PUT_ATT_TEXT(ncid,varid,'units',
+!      &                       len_trim(units),trim(units))
+!         err = NF_PUT_ATT_REAL(ncid,varid,'_FillValue',
+!      &                       NF_FLOAT,1,-1.)
+!         err = NF_ENDDEF(ncid)
+!         tmp(1:ntime) = parms(npar:npar+nparms*(ntime-1):nparms)
+!         err = NF_PUT_VAR_REAL(ncid, varid, tmp)
+!         print*,long_name
+! c--------------------------------------------------------
+!         long_name = 'ISCCP Cloud-Top Pressure'
+!         abbr_name = 'ISCCPPTOP'
+!         units = 'mb'
+!         npar = 47
+!         err = NF_REDEF(ncid)
+!         err = NF_DEF_VAR(ncid,trim(abbr_name),NF_FLOAT,
+!      &                                  1, timeid,varid)
+!         err = NF_PUT_ATT_TEXT(ncid,varid,'long_name',
+!      &                  len_trim(long_name),trim(long_name))
+!         err = NF_PUT_ATT_TEXT(ncid,varid,'units',
+!      &                       len_trim(units),trim(units))
+!         err = NF_PUT_ATT_REAL(ncid,varid,'_FillValue',
+!      &                       NF_FLOAT,1,-1.)
+!         err = NF_ENDDEF(ncid)
+!         tmp(1:ntime) = parms(npar:npar+nparms*(ntime-1):nparms)
+!         err = NF_PUT_VAR_REAL(ncid, varid, tmp)
+!         print*,long_name
+! c--------------------------------------------------------
+!         long_name = 'MODIS Cloud Optical Path'
+!         abbr_name = 'MODISTAU'
+!         units = ' '
+!         npar = 48
+!         err = NF_REDEF(ncid)
+!         err = NF_DEF_VAR(ncid,trim(abbr_name),NF_FLOAT,
+!      &                                  1, timeid,varid)
+!         err = NF_PUT_ATT_TEXT(ncid,varid,'long_name',
+!      &                  len_trim(long_name),trim(long_name))
+!         err = NF_PUT_ATT_TEXT(ncid,varid,'units',
+!      &                       len_trim(units),trim(units))
+!         err = NF_PUT_ATT_REAL(ncid,varid,'_FillValue',
+!      &                       NF_FLOAT,1,-1.)
+!         err = NF_ENDDEF(ncid)
+!         tmp(1:ntime) = parms(npar:npar+nparms*(ntime-1):nparms)
+!         err = NF_PUT_VAR_REAL(ncid, varid, tmp)
+!         print*,long_name
+! c--------------------------------------------------------
+!         long_name = 'MODIS Cloud Optical Path (Liquid)'
+!         abbr_name = 'MODISTAUL'
+!         units = ' '
+!         npar = 49
+!         err = NF_REDEF(ncid)
+!         err = NF_DEF_VAR(ncid,trim(abbr_name),NF_FLOAT,
+!      &                                  1, timeid,varid)
+!         err = NF_PUT_ATT_TEXT(ncid,varid,'long_name',
+!      &                  len_trim(long_name),trim(long_name))
+!         err = NF_PUT_ATT_TEXT(ncid,varid,'units',
+!      &                       len_trim(units),trim(units))
+!         err = NF_PUT_ATT_REAL(ncid,varid,'_FillValue',
+!      &                       NF_FLOAT,1,-1.)
+!         err = NF_ENDDEF(ncid)
+!         tmp(1:ntime) = parms(npar:npar+nparms*(ntime-1):nparms)
+!         err = NF_PUT_VAR_REAL(ncid, varid, tmp)
+!         print*,long_name
+! c--------------------------------------------------------
+!         long_name = 'MODIS Cloud Optical Path (Ice)'
+!         abbr_name = 'MODISTAUI'
+!         units = ' '
+!         npar = 50
+!         err = NF_REDEF(ncid)
+!         err = NF_DEF_VAR(ncid,trim(abbr_name),NF_FLOAT,
+!      &                                  1, timeid,varid)
+!         err = NF_PUT_ATT_TEXT(ncid,varid,'long_name',
+!      &                  len_trim(long_name),trim(long_name))
+!         err = NF_PUT_ATT_TEXT(ncid,varid,'units',
+!      &                       len_trim(units),trim(units))
+!         err = NF_PUT_ATT_REAL(ncid,varid,'_FillValue',
+!      &                       NF_FLOAT,1,-1.)
+!         err = NF_ENDDEF(ncid)
+!         tmp(1:ntime) = parms(npar:npar+nparms*(ntime-1):nparms)
+!         err = NF_PUT_VAR_REAL(ncid, varid, tmp)
+!         print*,long_name
+! c--------------------------------------------------------
+!         long_name = 'MODIS Cloud-Top Pressure'
+!         abbr_name = 'MODISPTOP'
+!         units = 'mb'
+!         npar = 51
+!         err = NF_REDEF(ncid)
+!         err = NF_DEF_VAR(ncid,trim(abbr_name),NF_FLOAT,
+!      &                                  1, timeid,varid)
+!         err = NF_PUT_ATT_TEXT(ncid,varid,'long_name',
+!      &                  len_trim(long_name),trim(long_name))
+!         err = NF_PUT_ATT_TEXT(ncid,varid,'units',
+!      &                       len_trim(units),trim(units))
+!         err = NF_PUT_ATT_REAL(ncid,varid,'_FillValue',
+!      &                       NF_FLOAT,1,-1.)
+!         err = NF_ENDDEF(ncid)
+!         tmp(1:ntime) = parms(npar:npar+nparms*(ntime-1):nparms)
+!         err = NF_PUT_VAR_REAL(ncid, varid, tmp)
+!         print*,long_name
+! c--------------------------------------------------------
+!         long_name = 'MISR Cloud-Top Height'
+!         abbr_name = 'MISRZTOP'
+!         units = 'km'
+!         npar = 52
+!         err = NF_REDEF(ncid)
+!         err = NF_DEF_VAR(ncid,trim(abbr_name),NF_FLOAT,
+!      &                                  1, timeid,varid)
+!         err = NF_PUT_ATT_TEXT(ncid,varid,'long_name',
+!      &                  len_trim(long_name),trim(long_name))
+!         err = NF_PUT_ATT_TEXT(ncid,varid,'units',
+!      &                       len_trim(units),trim(units))
+!         err = NF_PUT_ATT_REAL(ncid,varid,'_FillValue',
+!      &                       NF_FLOAT,1,-1.)
+!         err = NF_ENDDEF(ncid)
+!         tmp(1:ntime) = 0.001*parms(npar:npar+nparms*(ntime-1):nparms)
+!         err = NF_PUT_VAR_REAL(ncid, varid, tmp)
+!         print*,long_name
 c--------------------------------------------------------
         long_name = 'GCSS Inversion Height'
         abbr_name = 'ZINV'
@@ -1432,41 +1453,41 @@ c--------------------------------------------------------
         err = NF_PUT_VAR_REAL(ncid, varid, tmp)
         print*,long_name
 c--------------------------------------------------------
-        long_name = 'GCSS Liquid Water Path'
-        abbr_name = 'LWP'
-        units = 'g/m2'
-        npar = 61
-        err = NF_REDEF(ncid)
-        err = NF_DEF_VAR(ncid,trim(abbr_name),NF_FLOAT,
-     &                                  1, timeid,varid)
-        err = NF_PUT_ATT_TEXT(ncid,varid,'long_name',
-     &                  len_trim(long_name),trim(long_name))
-        err = NF_PUT_ATT_TEXT(ncid,varid,'units',
-     &                       len_trim(units),trim(units))
-        err = NF_PUT_ATT_REAL(ncid,varid,'_FillValue',
-     &                       NF_FLOAT,1,-1.)
-        err = NF_ENDDEF(ncid)
-        tmp(1:ntime) = 1000.*parms(npar:npar+nparms*(ntime-1):nparms)
-        err = NF_PUT_VAR_REAL(ncid, varid, tmp)
-        print*,long_name
+!         long_name = 'GCSS Liquid Water Path'
+!         abbr_name = 'LWP'
+!         units = 'g/m2'
+!         npar = 61
+!         err = NF_REDEF(ncid)
+!         err = NF_DEF_VAR(ncid,trim(abbr_name),NF_FLOAT,
+!      &                                  1, timeid,varid)
+!         err = NF_PUT_ATT_TEXT(ncid,varid,'long_name',
+!      &                  len_trim(long_name),trim(long_name))
+!         err = NF_PUT_ATT_TEXT(ncid,varid,'units',
+!      &                       len_trim(units),trim(units))
+!         err = NF_PUT_ATT_REAL(ncid,varid,'_FillValue',
+!      &                       NF_FLOAT,1,-1.)
+!         err = NF_ENDDEF(ncid)
+!         tmp(1:ntime) = 1000.*parms(npar:npar+nparms*(ntime-1):nparms)
+!         err = NF_PUT_VAR_REAL(ncid, varid, tmp)
+!         print*,long_name
 c--------------------------------------------------------
-        long_name = 'GCSS Variance of Liquid Water Path'
-        abbr_name = 'LWP2'
-        units = '(g/m2)^2'
-        npar = 62
-        err = NF_REDEF(ncid)
-        err = NF_DEF_VAR(ncid,trim(abbr_name),NF_FLOAT,
-     &                                  1, timeid,varid)
-        err = NF_PUT_ATT_TEXT(ncid,varid,'long_name',
-     &                  len_trim(long_name),trim(long_name))
-        err = NF_PUT_ATT_TEXT(ncid,varid,'units',
-     &                       len_trim(units),trim(units))
-        err = NF_PUT_ATT_REAL(ncid,varid,'_FillValue',
-     &                       NF_FLOAT,1,-1.)
-        err = NF_ENDDEF(ncid)
-        tmp(1:ntime) = 1000000.*parms(npar:npar+nparms*(ntime-1):nparms)
-        err = NF_PUT_VAR_REAL(ncid, varid, tmp)
-        print*,long_name
+!         long_name = 'GCSS Variance of Liquid Water Path'
+!         abbr_name = 'LWP2'
+!         units = '(g/m2)^2'
+!         npar = 62
+!         err = NF_REDEF(ncid)
+!         err = NF_DEF_VAR(ncid,trim(abbr_name),NF_FLOAT,
+!      &                                  1, timeid,varid)
+!         err = NF_PUT_ATT_TEXT(ncid,varid,'long_name',
+!      &                  len_trim(long_name),trim(long_name))
+!         err = NF_PUT_ATT_TEXT(ncid,varid,'units',
+!      &                       len_trim(units),trim(units))
+!         err = NF_PUT_ATT_REAL(ncid,varid,'_FillValue',
+!      &                       NF_FLOAT,1,-1.)
+!         err = NF_ENDDEF(ncid)
+!         tmp(1:ntime) = 1000000.*parms(npar:npar+nparms*(ntime-1):nparms)
+!         err = NF_PUT_VAR_REAL(ncid, varid, tmp)
+!         print*,long_name
 c--------------------------------------------------------
         long_name = 'GCSS Precipitation Rate'
         abbr_name = 'PRECMN'
@@ -1522,71 +1543,71 @@ c--------------------------------------------------------
         err = NF_PUT_VAR_REAL(ncid, varid, tmp)
         print*,long_name
 c--------------------------------------------------------
-        long_name = 'GCSS Mean Drop Number Comcentration'
-        abbr_name = 'NCMN'
-        units = '#/cm3'
-        npar = 66
-        err = NF_REDEF(ncid)
-        err = NF_DEF_VAR(ncid,trim(abbr_name),NF_FLOAT,
-     &                                  1, timeid,varid)
-        err = NF_PUT_ATT_TEXT(ncid,varid,'long_name',
-     &                  len_trim(long_name),trim(long_name))
-        err = NF_PUT_ATT_TEXT(ncid,varid,'units',
-     &                       len_trim(units),trim(units))
-        err = NF_PUT_ATT_REAL(ncid,varid,'_FillValue',
-     &                       NF_FLOAT,1,-1.)
-        err = NF_ENDDEF(ncid)
-        tmp(1:ntime) = parms(npar:npar+nparms*(ntime-1):nparms)
-        err = NF_PUT_VAR_REAL(ncid, varid, tmp)
-        print*,long_name
-        print*,tmp(1:ntime)
+   !      long_name = 'GCSS Mean Drop Number Comcentration'
+   !      abbr_name = 'NCMN'
+   !      units = '#/cm3'
+   !      npar = 66
+   !      err = NF_REDEF(ncid)
+   !      err = NF_DEF_VAR(ncid,trim(abbr_name),NF_FLOAT,
+   !   &                                  1, timeid,varid)
+   !      err = NF_PUT_ATT_TEXT(ncid,varid,'long_name',
+   !   &                  len_trim(long_name),trim(long_name))
+   !      err = NF_PUT_ATT_TEXT(ncid,varid,'units',
+   !   &                       len_trim(units),trim(units))
+   !      err = NF_PUT_ATT_REAL(ncid,varid,'_FillValue',
+   !   &                       NF_FLOAT,1,-1.)
+   !      err = NF_ENDDEF(ncid)
+   !      tmp(1:ntime) = parms(npar:npar+nparms*(ntime-1):nparms)
+   !      err = NF_PUT_VAR_REAL(ncid, varid, tmp)
+   !      print*,long_name
+   !      print*,tmp(1:ntime)
 c--------------------------------------------------------
-        long_name = 'GCSS Mean Rain Number Comcentration'
-        abbr_name = 'NRMN'
-        units = '#/cm3'
-        npar = 67
-        err = NF_REDEF(ncid)
-        err = NF_DEF_VAR(ncid,trim(abbr_name),NF_FLOAT,
-     &                                  1, timeid,varid)
-        err = NF_PUT_ATT_TEXT(ncid,varid,'long_name',
-     &                  len_trim(long_name),trim(long_name))
-        err = NF_PUT_ATT_TEXT(ncid,varid,'units',
-     &                       len_trim(units),trim(units))
-        err = NF_PUT_ATT_REAL(ncid,varid,'_FillValue',
-     &                       NF_FLOAT,1,-1.)
-        err = NF_ENDDEF(ncid)
-        tmp(1:ntime) = parms(npar:npar+nparms*(ntime-1):nparms)
-        err = NF_PUT_VAR_REAL(ncid, varid, tmp)
-        print*,long_name
-        print*,tmp(1:ntime)
+   !      long_name = 'GCSS Mean Rain Number Comcentration'
+   !      abbr_name = 'NRMN'
+   !      units = '#/cm3'
+   !      npar = 67
+   !      err = NF_REDEF(ncid)
+   !      err = NF_DEF_VAR(ncid,trim(abbr_name),NF_FLOAT,
+   !   &                                  1, timeid,varid)
+   !      err = NF_PUT_ATT_TEXT(ncid,varid,'long_name',
+   !   &                  len_trim(long_name),trim(long_name))
+   !      err = NF_PUT_ATT_TEXT(ncid,varid,'units',
+   !   &                       len_trim(units),trim(units))
+   !      err = NF_PUT_ATT_REAL(ncid,varid,'_FillValue',
+   !   &                       NF_FLOAT,1,-1.)
+   !      err = NF_ENDDEF(ncid)
+   !      tmp(1:ntime) = parms(npar:npar+nparms*(ntime-1):nparms)
+   !      err = NF_PUT_VAR_REAL(ncid, varid, tmp)
+   !      print*,long_name
+   !      print*,tmp(1:ntime)
 c--------------------------------------------------------
-        long_name = 'GCSS Precip. over threshold Area Fraction'
-        abbr_name = 'AREAPRTHR'
-        units = ' '
-        npar = 68
-        err = NF_REDEF(ncid)
-        err = NF_DEF_VAR(ncid,trim(abbr_name),NF_FLOAT,
-     &                                  1, timeid,varid)
-        err = NF_PUT_ATT_TEXT(ncid,varid,'long_name',
-     &                  len_trim(long_name),trim(long_name))
-        err = NF_PUT_ATT_TEXT(ncid,varid,'units',
-     &                       len_trim(units),trim(units))
-        err = NF_PUT_ATT_REAL(ncid,varid,'_FillValue',
-     &                       NF_FLOAT,1,-1.)
-        err = NF_ENDDEF(ncid)
-        tmp(1:ntime) = parms(npar:npar+nparms*(ntime-1):nparms)
-        err = NF_PUT_VAR_REAL(ncid, varid, tmp)
-        print*,long_name
-        print*,tmp(1:ntime)
+   !      long_name = 'GCSS Precip. over threshold Area Fraction'
+   !      abbr_name = 'AREAPRTHR'
+   !      units = ' '
+   !      npar = 68
+   !      err = NF_REDEF(ncid)
+   !      err = NF_DEF_VAR(ncid,trim(abbr_name),NF_FLOAT,
+   !   &                                  1, timeid,varid)
+   !      err = NF_PUT_ATT_TEXT(ncid,varid,'long_name',
+   !   &                  len_trim(long_name),trim(long_name))
+   !      err = NF_PUT_ATT_TEXT(ncid,varid,'units',
+   !   &                       len_trim(units),trim(units))
+   !      err = NF_PUT_ATT_REAL(ncid,varid,'_FillValue',
+   !   &                       NF_FLOAT,1,-1.)
+   !      err = NF_ENDDEF(ncid)
+   !      tmp(1:ntime) = parms(npar:npar+nparms*(ntime-1):nparms)
+   !      err = NF_PUT_VAR_REAL(ncid, varid, tmp)
+   !      print*,long_name
+   !      print*,tmp(1:ntime)
 
 
 c--------------------------------------------------------
 
-        if(npar.ne.nparms) then
-          print*,'number of parameters is not == to nparas'
-          print*,'npar=',npar,'  nparms=',nparms
-          stop
-        end if
+      !   if(npar.ne.nparms) then
+      !     print*,'number of parameters is not == to nparas'
+      !     print*,'npar=',npar,'  nparms=',nparms
+      !     stop
+      !   end if
 
 
 

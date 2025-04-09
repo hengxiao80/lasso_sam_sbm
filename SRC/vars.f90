@@ -46,6 +46,9 @@ real precsfc(nx,ny) ! surface precip. rate
 
 real   t0(nzm), q0(nzm), qv0(nzm), tabs0(nzm), tl0(nzm), &
        tv0(nzm), u0(nzm), v0(nzm), &
+       ! ul0/ul0 now store large-scale mean winds (for nudging)
+       ! ug0/ug0 now store large-scale geostrophic winds (for large-scale pressure gradient)
+       ul0(nzm), vl0(nzm), &
        tg0(nzm), qg0(nzm), ug0(nzm), vg0(nzm), p0(nzm), &
        t01(nzm), q01(nzm), qp0(nzm), qn0(nzm)
 !----------------------------------------------------------------
@@ -85,7 +88,10 @@ real, allocatable :: dqls(:,:) ! Large-scale tendency for total water
 real, allocatable :: dtls(:,:) ! Large-scale tendency for temp.
 real, allocatable :: ugls(:,:) ! Large-scale wind in X-direction
 real, allocatable :: vgls(:,:) ! Large-scale wind in Y-direction
-real, allocatable :: wgls(:,:) ! Large-scale subsidence velocity,m/s
+! separate variables for large-scale mean and geostrophic winds --- Heng Xiao, 09/25/2024
+real, allocatable :: uls(:,:) ! Large-scale wind in X-direction
+real, allocatable :: vls(:,:) ! Large-scale wind in Y-direction
+real, allocatable :: wls(:,:) ! Large-scale subsidence velocity,m/s
 real, allocatable :: pres0ls(:)! Surface pressure, mb
 real, allocatable :: zls(:,:)  ! Height
 real, allocatable :: pls(:,:)  ! Pressure
@@ -127,8 +133,10 @@ real lwntc_xy(nx,ny) ! clear-sky mean net lw at TOA
 real swntc_xy(nx,ny) ! clear-sky mean net sw at TOA
 real solin_xy(nx,ny) ! solar TOA insolation
 real pw_xy(nx,ny)   ! precipitable water
-real cw_xy(nx,ny)   ! cloud water path
-real iw_xy(nx,ny)   ! ice water path
+real cw_xy(nx,ny)   ! cloud liquid water path
+real rw_xy(nx,ny)   ! precipitating liquid water path
+real iw_xy(nx,ny)   ! cloud ice water path
+real piw_xy(nx,ny)   ! precipitating ice water path
 real cld_xy(nx,ny)   ! cloud frequency
 real u200_xy(nx,ny) ! u-wind at 200 mb
 real usfc_xy(nx,ny) ! u-wind at at the surface

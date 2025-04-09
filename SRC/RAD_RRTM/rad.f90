@@ -118,7 +118,7 @@ contains
                      solar_constant, zenith_angle
 
 
-    use vars, only : t, tabs, qv, qcl, qci, sstxy, rho, t00, &
+    use vars, only : t, tabs, qv, qcl, qpl, qci, sstxy, rho, t00, &
       latitude, longitude,                         &
       ! Domain-average diagnostic fields
       radlwup, radlwdn, radswup, radswdn, radqrlw, radqrsw, &
@@ -273,7 +273,7 @@ contains
           !
           ! Compute cloud IWP/LWP and particle sizes - convert from kg to g
           !
-          LWP(:, 1:nzm) = qcl(:, lat, 1:nzm) * 1.e3 * layerMass(:, 1:nzm) 
+          LWP(:, 1:nzm) = (qcl(:, lat, 1:nzm) + qpl(:, lat, 1:nzm))* 1.e3 * layerMass(:, 1:nzm) 
           LWP(:, nzm+1) = 0. ! zero out extra layer
 
           IWP(:, 1:nzm) = qci(:, lat, 1:nzm) * 1.e3 * layerMass(:, 1:nzm) 
@@ -921,10 +921,18 @@ contains
   !
   ! ----------------------------------------------------------------------------
   subroutine write_rad()
+    use IFPORT
     use grid, only : restart_sep, rank, nstep, masterproc, nsubdomains, case, caseid
-    use vars, only: radqrlw, radqrsw, radlwup, radlwdn, radswup, radswdn
+    use vars, only: radqrlw, radqrsw, radlwup, radlwdn, radswup, radswdn, lenstr
     implicit none    
-    integer :: irank, ii
+
+    character *10 timechar
+    integer :: irank, ii, status
+
+    write(timechar,'(i10)') nstep
+    do ii=1,11-lenstr(timechar)-1
+      timechar(ii:ii)='0'
+    end do
 
     !bloss: added a bunch of statistics-related stuff to the restart file
     !         to nicely handle the rare case when nrad exceeds nstat and 
@@ -932,10 +940,13 @@ contains
     !         many of the radiation statistics to be zero before the next
     !         multiple of nrad.
 
-    if(masterproc) print*,'Writting radiation restart file...'
+    if(masterproc) then
+      print*,'Writting radiation restart file...'
+      status = SYSTEM('mkdir -p RESTART/'//timechar(1:10))
+    endif
 
     if(restart_sep) then
-      open(56, file = trim(constructRestartFileName(case, caseId, rank)), &
+      open(56, file = trim(constructRestartFileName4Write(case, caseId, nstep, rank)), &
            status='unknown',form='unformatted')
       write(56) nsubdomains
 	  write(56) nradsteps, qrad, radlwup, radlwdn, radswup, radswdn, &
@@ -951,7 +962,7 @@ contains
       do irank = 0, nsubdomains-1
         call task_barrier()
         if(irank == rank) then
-          open(56, file = trim(constructRestartFileName(case, caseId, nSubdomains)), &
+          open(56, file = trim(constructRestartFileName4Write(case, caseId, nstep, nSubdomains)), &
                status='unknown',form='unformatted')
           if(masterproc) then
             write(56) nsubdomains
@@ -1048,19 +1059,42 @@ contains
   end subroutine read_rad      
   
   ! ----------------------------------------------------------------------------
+  function constructRestartFileName4Write(case, caseid, nstep, index) result(name) 
+    character(len = *), intent(in) :: case, caseid
+    integer,            intent(in) :: nstep, index
+    character(len=256) :: name
+    
+    character(len=4) :: indexChar
+    character(len=10) :: timechar
+    integer :: i
+    integer, external :: lenstr
+
+    write(indexChar,'(i4)') index
+    write(timechar,'(i10)') nstep
+    do i=1,11-lenstr(timechar)-1
+      timechar(i:i)='0'
+    end do
+
+    name = './RESTART/' // timechar(1:10) // '/' // trim(case) // '_' // trim(caseid) // '_' // &
+              indexChar(5-lenstr(indexChar):4) // '_restart_rad.bin'
+!bloss              trim(indexChar) //'_restart_rad.bin'
+
+  end function constructRestartFileName4Write
+  ! ----------------------------------------------------------------------------
+
+    ! ----------------------------------------------------------------------------
   function constructRestartFileName(case, caseid, index) result(name) 
     character(len = *), intent(in) :: case, caseid
     integer,            intent(in) :: index
     character(len=256) :: name
     
     character(len=4) :: indexChar
-
     integer, external :: lenstr
 
     write(indexChar,'(i4)') index
 
-    name = './RESTART/' // trim(case) //'_'// trim(caseid) //'_'// &
-              indexChar(5-lenstr(indexChar):4) //'_restart_rad.bin'
+    name = './RESTART/'// trim(case) // '_' // trim(caseid) // '_' // &
+              indexChar(5-lenstr(indexChar):4) // '_restart_rad.bin'
 !bloss              trim(indexChar) //'_restart_rad.bin'
 
   end function constructRestartFileName

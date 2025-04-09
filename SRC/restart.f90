@@ -1,16 +1,26 @@
 	subroutine write_all()
 	
 	use vars
+  use IFPORT
 	implicit none
 	character *4 rankchar
+	character *10 timechar
 	character *256 filename
-	integer irank
+	integer irank, i
+  integer status
 
         call t_startf ('restart_out')
 
+        write(timechar,'(i10)') nstep
+        do i=1,11-lenstr(timechar)-1
+          timechar(i:i)='0'
+        end do
+
         if(masterproc) then
+         print*,'Making a subdirectory under RESTART ...'
+         status = SYSTEM('mkdir -p RESTART/'//timechar(1:10))
          print*,'Writing restart file ...'
-         filename = './RESTART/'//trim(case)//'_'//trim(caseid)//'_misc_restart.bin'
+         filename = './RESTART/'//timechar(1:10)//'/'//trim(case)//'_'//trim(caseid)//'_misc_restart.bin'
          open(66,file=trim(filename), status='unknown',form='unformatted')
         end if
 
@@ -19,7 +29,7 @@
 
           write(rankchar,'(i4)') rank
 
-          filename = './RESTART/'//trim(case)//'_'//trim(caseid)//'_'//&
+          filename = './RESTART/'//timechar(1:10)//'/'//trim(case)//'_'//trim(caseid)//'_'//&
                 rankchar(5-lenstr(rankchar):4)//'_restart.bin'
 
 
@@ -31,7 +41,7 @@
 
 	else
 	  write(rankchar,'(i4)') nsubdomains
-	  filename = './RESTART/'//trim(case)//'_'//trim(caseid)//'_'//&
+	  filename = './RESTART/'//timechar(1:10)//'/'//trim(case)//'_'//trim(caseid)//'_'//&
                 rankchar(5-lenstr(rankchar):4)//'_restart.bin'
 
 	  do irank=0,nsubdomains-1

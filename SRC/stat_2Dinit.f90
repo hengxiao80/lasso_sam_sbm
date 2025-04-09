@@ -14,7 +14,9 @@ implicit none
      swntc_xy(:,:) = 0.
      pw_xy(:,:) = 0.
      cw_xy(:,:) = 0.
+     rw_xy(:,:) = 0.
      iw_xy(:,:) = 0.
+     piw_xy(:,:) = 0.
      cld_xy(:,:) = 0.
      u200_xy(:,:) = 0.
      v200_xy(:,:) = 0.

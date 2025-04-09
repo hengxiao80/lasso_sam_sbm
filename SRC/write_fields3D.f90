@@ -20,16 +20,17 @@ character *12 c_z(nzm),c_p(nzm),c_dx, c_dy, c_time
 integer i,j,k,n,nfields,nfields1
 real tmp(nx,ny,nzm)
 
-nfields=8 ! number of 3D fields to save
-if(.not.docloud) nfields=nfields-1
-if(.not.doprecip) nfields=nfields-1
+! nfields=8 ! number of 3D fields to save
+nfields=10 ! number of 3D fields to save, QN->QCL, QCI, QP->QPL, QPI
+if(.not.docloud) nfields=nfields-2
+if(.not.doprecip) nfields=nfields-2
 !bloss: add 3D outputs for microphysical fields specified by flag_micro3Dout
 !       except for water vapor (already output as a SAM default).
 
 !mo if(docloud) nfields=nfields+SUM(flag_micro3Dout)-flag_micro3Dout(index_water_vapor)
 if((dolongwave.or.doshortwave).and..not.doradhomo) nfields=nfields+1
-!mo if(compute_reffc.and.(dolongwave.or.doshortwave).and.rad3Dout) nfields=nfields+1
-!mo if(compute_reffi.and.(dolongwave.or.doshortwave).and.rad3Dout) nfields=nfields+1
+if((dolongwave.or.doshortwave).and.rad3Dout) nfields=nfields+1
+if((dolongwave.or.doshortwave).and.rad3Dout) nfields=nfields+1
 
 nfields1=0
 
@@ -200,24 +201,38 @@ if((dolongwave.or.doshortwave).and..not.doradhomo) then
   call compress3D(tmp,nx,ny,nzm,name,long_name,units, &
                                  save3Dbin,dompi,rank,nsubdomains)
 end if
-!mo if(compute_reffc.and.(dolongwave.or.doshortwave).and.rad3Dout) then
-!mo   nfields1=nfields1+1
-!mo   tmp(1:nx,1:ny,1:nzm)=Get_reffc()
-!mo   name='REL'
-!mo   long_name='Effective Radius for Cloud Liquid Water'
-!mo   units='mkm'
-!mo   call compress3D(tmp,nx,ny,nzm,name,long_name,units, &
-!mo                                  save3Dbin,dompi,rank,nsubdomains)
-!mo end if
-!mo if(compute_reffi.and.(dolongwave.or.doshortwave).and.rad3Dout) then
-!mo   nfields1=nfields1+1
-!mo   tmp(1:nx,1:ny,1:nzm)=Get_reffi()
-!mo   name='REI'
-!mo   long_name='Effective Radius for Cloud Ice'
-!mo   units='mkm'
-!mo   call compress3D(tmp,nx,ny,nzm,name,long_name,units, &
-!mo                                  save3Dbin,dompi,rank,nsubdomains)
-!mo end if
+
+if((dolongwave.or.doshortwave).and.rad3Dout) then
+  nfields1=nfields1+1
+  do k=1,nzm
+    do j=1,ny
+     do i=1,nx
+       tmp(i,j,k)=rel_rad(i,j,k)
+     end do
+    end do
+   end do
+  name='REL'
+  long_name='Effective Radius for Cloud Liquid Water'
+  units='micrometer'
+  call compress3D(tmp,nx,ny,nzm,name,long_name,units, &
+                                 save3Dbin,dompi,rank,nsubdomains)
+end if
+
+if((dolongwave.or.doshortwave).and.rad3Dout) then
+  nfields1=nfields1+1
+  do k=1,nzm
+    do j=1,ny
+     do i=1,nx
+       tmp(i,j,k)=rei_rad(i,j,k)
+     end do
+    end do
+   end do
+  name='REI'
+  long_name='Effective Radius for Cloud Ice'
+  units='micrometer'
+  call compress3D(tmp,nx,ny,nzm,name,long_name,units, &
+                                 save3Dbin,dompi,rank,nsubdomains)
+end if
 
 
   nfields1=nfields1+1
@@ -253,15 +268,29 @@ if(docloud) then
   do k=1,nzm
    do j=1,ny
     do i=1,nx
-      tmp(i,j,k)=(qcl(i,j,k)+qci(i,j,k))*1.e3
+      tmp(i,j,k)=qcl(i,j,k)*1.e3
     end do
    end do
   end do
-  name='QN'
-  long_name='Non-precipitating Condensate (Water+Ice)'
+  name='QCL'
+  long_name='Cloud Liquid Water'
   units='g/kg'
   call compress3D(tmp,nx,ny,nzm,name,long_name,units, &
-                                 save3Dbin,dompi,rank,nsubdomains)
+                  save3Dbin,dompi,rank,nsubdomains)
+
+  nfields1=nfields1+1
+  do k=1,nzm
+  do j=1,ny
+    do i=1,nx
+      tmp(i,j,k)=qci(i,j,k)*1.e3
+    end do
+  end do
+  end do
+  name='QCI'
+  long_name='Cloud Ice Water'
+  units='g/kg'
+  call compress3D(tmp,nx,ny,nzm,name,long_name,units, &
+                  save3Dbin,dompi,rank,nsubdomains)
 end if
 
 
@@ -270,15 +299,28 @@ if(doprecip) then
   do k=1,nzm
    do j=1,ny
     do i=1,nx
-      tmp(i,j,k)=(qpl(i,j,k)+qpi(i,j,k))*1.e3
+      tmp(i,j,k)=qpl(i,j,k)*1.e3
     end do
    end do
   end do
-  name='QP'
-  long_name='Precipitating Water (Rain+Snow)'
+  name='QPL'
+  long_name='Precipitating Liquid Water'
   units='g/kg'
   call compress3D(tmp,nx,ny,nzm,name,long_name,units, &
-                                 save3Dbin,dompi,rank,nsubdomains)
+                  save3Dbin,dompi,rank,nsubdomains)
+  nfields1=nfields1+1
+  do k=1,nzm
+  do j=1,ny
+    do i=1,nx
+      tmp(i,j,k)=qpi(i,j,k)*1.e3
+    end do
+  end do
+  end do
+  name='QPI'
+  long_name='Precipitating Ice Water'
+  units='g/kg'
+  call compress3D(tmp,nx,ny,nzm,name,long_name,units, &
+                  save3Dbin,dompi,rank,nsubdomains)
 end if
 
 

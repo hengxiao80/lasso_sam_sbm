@@ -84,18 +84,21 @@ implicit none
 	real qcc,qii,qrr,qss,lstarn,lstarp,coef,coef1
 	real factor_xy, factor_n, tmp(4), tmp1(4)
 !mo        real buffer(nzm,6),buffer1(nzm,6)
-        real buffer(nzm,8),buffer1(nzm,8)      ! Add variables for ISDAC (MO)
+	real buffer(nzm,8),buffer1(nzm,8)      ! Add variables for ISDAC (MO)
 	real prof1(nzm),prof2(nzm),prof3(nzm),prof4(nzm)	
-	real cwpmax,cwp(nx,ny),cwpl(nx,ny),cwpm(nx,ny),cwph(nx,ny)
+	! real cwpmax,cwp(nx,ny),cwpl(nx,ny),cwpm(nx,ny),cwph(nx,ny)
 	logical condition, condition_cl
 	real zero(nzm)
 
-	integer topind(nx,ny),z_inv_ind(nx,ny),z_base_ind(nx,ny),z_top_ind(nx,ny),ncloud	
-        real zzz,grad_max(nx,ny),grad
+	! integer topind(nx,ny),z_inv_ind(nx,ny),z_base_ind(nx,ny),z_top_ind(nx,ny),ncloud	
+	integer z_inv_ind(nx,ny),z_base_ind(nx,ny),z_top_ind(nx,ny),ncloud	
+	real zzz,grad_max(nx,ny),grad
 
-	real lwp(nx,ny),iwp(nx,ny), cldclmn(nx,ny)              !mo
-        real zctl_xy(nx,ny), zcbl_xy(nx,ny), zinv_xy(nx,ny)     !mo
-        real www, tlzz                                          !mo
+	! real lwp(nx,ny),iwp(nx,ny), cldclmn(nx,ny)              !mo
+	real cldclmn(nx,ny)              !mo
+	! real zctl_xy(nx,ny), zcbl_xy(nx,ny), zinv_xy(nx,ny)     !mo
+	! real www, tlzz                                          !mo
+	real tlzz                                          !mo
 
 !========================================================================
 ! UW ADDITIONS
@@ -147,7 +150,7 @@ real, dimension(nzm) :: rhowcl, rhowmsecl, rhowtlcl, rhowqtcl,  &
 !-----------------------------------------------
 !	Mean thermodynamics profiles:
 !-----------------------------------------------	
-        zinv_xy(:,:) = 0.                   !MO 4/13/16
+	! zinv_xy(:,:) = 0.                   !MO 4/13/16
 		
 	do k=1,nzm
 	 dse(k)=0.
@@ -232,9 +235,9 @@ real, dimension(nzm) :: rhowcl, rhowmsecl, rhowtlcl, rhowqtcl,  &
 
 	call hbuf_put('TABSOBS',tg0,1.)
 	call hbuf_put('QVOBS',qg0,1.e3)
-	call hbuf_put('UOBS',ug0,1.)
-	call hbuf_put('VOBS',vg0,1.)
-        call hbuf_put('WOBS',wsub,1.)
+	call hbuf_put('UOBS',ul0,1.)
+	call hbuf_put('VOBS',vl0,1.)
+	call hbuf_put('WOBS',wsub,1.)
 	call hbuf_put('TTEND',ttend,86400.)
 	call hbuf_put('QTEND',qtend,86400.*1.e3)
 
@@ -298,7 +301,7 @@ real, dimension(nzm) :: rhowcl, rhowmsecl, rhowtlcl, rhowqtcl,  &
 	 do i=1,nx
 	  precsfc(i,j)=precsfc(i,j)*dz/dt*86400./(nstatis+1.e-5)
           if(precsfc(i,j).gt.0.1) s_ar = s_ar + 1.
-          if(precsfc(i,j)/86400./rhow(1).gt.3.65e-5) s_arthr = s_arthr + 1.
+        !   if(precsfc(i,j)/86400./rhow(1).gt.3.65e-5) s_arthr = s_arthr + 1.
 	 end do
 	end do
         precmax = maxval(precsfc(:,:))
@@ -713,7 +716,7 @@ real, dimension(nzm) :: rhowcl, rhowmsecl, rhowtlcl, rhowqtcl,  &
 
          do k = 1,nzm
             if(LES) then
-               coef=0.
+               coef=1.0e-12
             else
                coef=min(1.e-5,0.01*qsatw(tabs0(k),pres(k)))
             endif
@@ -738,7 +741,7 @@ real, dimension(nzm) :: rhowcl, rhowmsecl, rhowtlcl, rhowqtcl,  &
                      ! downdraft (w<-1) core (tv'>0) statistics
                      ! in LES, buoyant, saturated or rainy statistics
                      condition_cl = qcl(i,j,k)+qci(i,j,k).gt.coef &
-                                .or. qpl(i,j,k)+qpi(i,j,k).gt.1.e-4 
+                                .or. qpl(i,j,k)+qpi(i,j,k).gt.1.e-6 
                      condition = tvirt(i,j,k).lt.tvz(k) 
                      if(CEM) condition=condition.and.w(i,j,k)+w(i,j,k+1).lt.-2.
                      if(LES) condition=condition_cl.and.condition
@@ -826,7 +829,7 @@ real, dimension(nzm) :: rhowcl, rhowmsecl, rhowtlcl, rhowqtcl,  &
 
             do k=1,nzm
                if(LES) then
-                  coef=0.
+                  coef=1.0e-12
                else
                   coef=min(1.e-5,0.01*qsatw(tabs0(k),pres(k)))
                endif
@@ -1014,7 +1017,7 @@ real, dimension(nzm) :: rhowcl, rhowmsecl, rhowtlcl, rhowqtcl,  &
 	 prof3(k)=0.
 	 prof4(k)=0.
 	 if(LES) then
-	  coef=0.
+	  coef=1.0e-12
 	 else
 	  coef=min(1.e-5,0.01*qsatw(tabs0(k),pres(k)))
 	 endif
@@ -1028,7 +1031,7 @@ real, dimension(nzm) :: rhowcl, rhowmsecl, rhowtlcl, rhowqtcl,  &
 	      else
 	        prof2(k)=prof2(k)+rho(k)*tmp(1)
 	      endif	
-	    elseif(qpl(i,j,k)+qpi(i,j,k).gt.1.e-4) then
+	    elseif(qpl(i,j,k)+qpi(i,j,k).gt.1.e-6) then
 	      hydro(k) = hydro(k) + 1
 	      if(w(i,j,k)+w(i,j,k+1).lt.0.) &
  	         prof3(k)=prof3(k)+rho(k)*0.5*(w(i,j,k+1)+w(i,j,k))      
@@ -1054,7 +1057,7 @@ real, dimension(nzm) :: rhowcl, rhowmsecl, rhowtlcl, rhowqtcl,  &
 	 cldd(k) = 0.
 	 prof1(k)=0.
          if(LES) then
-          coef=0.
+          coef=1.0e-12
          else
           coef=min(1.e-5,0.01*qsatw(tabs0(k),pres(k)))
          endif
@@ -1085,13 +1088,13 @@ real, dimension(nzm) :: rhowcl, rhowmsecl, rhowtlcl, rhowqtcl,  &
 	 prof2(k)=0.
 	 prof3(k)=0.
          if(LES) then
-          coef=0.
+          coef=1.0e-12
          else
           coef=min(1.e-5,0.01*qsatw(tabs0(k),pres(k)))
          endif
 	 do j=1,ny
 	  do i=1,nx
-	    condition_cl = qcl(i,j,k)+qci(i,j,k).gt.coef .or. qpl(i,j,k)+qpi(i,j,k).gt.1.e-4 
+	    condition_cl = qcl(i,j,k)+qci(i,j,k).gt.coef .or. qpl(i,j,k)+qpi(i,j,k).gt.1.e-6 
      	    condition = tvirt(i,j,k).lt.tvz(k) 
 	    if(CEM) condition=condition.and.w(i,j,k)+w(i,j,k+1).lt.-2.
 	    if(LES) condition=condition_cl.and.condition
@@ -1120,11 +1123,11 @@ real, dimension(nzm) :: rhowcl, rhowmsecl, rhowtlcl, rhowqtcl,  &
 
 	do j=1,ny
 	 do i=1,nx
-	   cwp(i,j)=0.
-	   cwpl(i,j)=0.
-	   cwpm(i,j)=0.
-	   cwph(i,j)=0.
-	   topind(i,j)=1
+	!    cwp(i,j)=0.
+	!    cwpl(i,j)=0.
+	!    cwpm(i,j)=0.
+	!    cwph(i,j)=0.
+	! !    topind(i,j)=1
            z_inv_ind(i,j)=1
            z_base_ind(i,j)=0
            z_top_ind(i,j)=0
@@ -1132,22 +1135,23 @@ real, dimension(nzm) :: rhowcl, rhowmsecl, rhowtlcl, rhowqtcl,  &
 	 end do
 	end do
 	
-	if(CEM) then
-	  cwpmax=0.02
-	else
-	  cwpmax=0.0
-	endif
+	! if(CEM) then
+	!   cwpmax=0.02
+	! else
+	!   cwpmax=0.0
+	! endif
 
 	do k=nzm,1,-1
 	 prof1(k)=(radqrlw(k)+radqrsw(k))*factor_xy
 	!  tmp(1)=rho(k)*adzw(k)*dz
-	 tmp(1)=rho(k)*adz(k)*dz
+	!  tmp(1)=rho(k)*adz(k)*dz
          kc = min(nzm,k+1)
          kb = max(1,k-1)
          tmp(2)=1./(z(kc)-z(kb))
 	 do j=1,ny
 	  do i=1,nx
-            if(z(k).lt.4000.) then ! shallow clouds only
+    !         ! if(z(k).lt.4000.) then ! shallow clouds only
+            if(z(k).lt.6000.) then ! shallow clouds only
                ! find height of max pot. temp. vert gradient (inversion height) 
                grad = (t(i,j,kc)-t(i,j,kb))*tmp(2)
                if(grad_max(i,j).lt.grad)then
@@ -1155,53 +1159,53 @@ real, dimension(nzm) :: rhowcl, rhowmsecl, rhowtlcl, rhowqtcl,  &
                  z_inv_ind(i,j)=k
                end if
             end if
-	    cwp(i,j)=cwp(i,j)+tmp(1)*(qcl(i,j,k)+qci(i,j,k))
-            if(pres(k).ge.700.) then
-	      cwpl(i,j)=cwpl(i,j)+tmp(1)*(qcl(i,j,k)+qci(i,j,k))
-            else if(pres(k).le.400.) then
-	      cwph(i,j)=cwph(i,j)+tmp(1)*(qcl(i,j,k)+qci(i,j,k))
-            else
-	      cwpm(i,j)=cwpm(i,j)+tmp(1)*(qcl(i,j,k)+qci(i,j,k))
-	    end if
-	    if(cwp(i,j).gt.cwpmax.and.topind(i,j).eq.1)topind(i,j)=k
+	!     cwp(i,j)=cwp(i,j)+tmp(1)*(qcl(i,j,k)+qci(i,j,k))
+    !         if(pres(k).ge.700.) then
+	!       cwpl(i,j)=cwpl(i,j)+tmp(1)*(qcl(i,j,k)+qci(i,j,k))
+    !         else if(pres(k).le.400.) then
+	!       cwph(i,j)=cwph(i,j)+tmp(1)*(qcl(i,j,k)+qci(i,j,k))
+    !         else
+	!       cwpm(i,j)=cwpm(i,j)+tmp(1)*(qcl(i,j,k)+qci(i,j,k))
+	!     end if
+	!     ! if(cwp(i,j).gt.cwpmax.and.topind(i,j).eq.1)topind(i,j)=k
 	  end do
 	 end do
 	end do
 
-        ncloud = 0
-        do k=1,nzm
-         do j=1,ny
-          do i=1,nx
-            if(z_base_ind(i,j).eq.0.and.qcl(i,j,k).gt.0.)then
-                z_base_ind(i,j)=k
-                ncloud = ncloud+1
-            end if
-            if(qcl(i,j,k).gt.0.) then
-                z_top_ind(i,j)=k
-            end if
-          end do
-         end do
-        end do
-        if(ncloud.eq.0) then
-         coef = 0.
-        else
-         coef = float(nx*ny)/float(ncloud)
-         ncloudy = ncloudy+1
-        end if
+	ncloud = 0
+	do k=1,nzm
+		do j=1,ny
+		do i=1,nx
+		if(z_base_ind(i,j).eq.0.and.(qcl(i,j,k)+qci(i,j,k)).gt.1.0e-12)then
+			z_base_ind(i,j)=k
+			ncloud = ncloud+1
+		end if
+		if((qcl(i,j,k)+qci(i,j,k)).gt.1.0e-12) then
+			z_top_ind(i,j)=k
+		end if
+		end do
+		end do
+	end do
+	if(ncloud.eq.0) then
+		coef = 0.
+	else
+		coef = float(nx*ny)/float(ncloud)
+		ncloudy = ncloudy+1
+	end if
 
 	do j=1,ny
 	 do i=1,nx
 	!    if(cwp(i,j).gt.cwpmax) s_acld=s_acld+1.
-	   if(cwpl(i,j).gt.cwpmax) s_acldl=s_acldl+1.
-	   if(cwpm(i,j).gt.cwpmax) s_acldm=s_acldm+1.
-	   if(cwph(i,j).gt.cwpmax) s_acldh=s_acldh+1.
-	   if(tabs(i,j,topind(i,j)).lt.245.) s_acldcold=s_acldcold+1
+	!    if(cwpl(i,j).gt.cwpmax) s_acldl=s_acldl+1.
+	!    if(cwpm(i,j).gt.cwpmax) s_acldm=s_acldm+1.
+	!    if(cwph(i,j).gt.cwpmax) s_acldh=s_acldh+1.
+	!    if(tabs(i,j,topind(i,j)).lt.245.) s_acldcold=s_acldcold+1
            s_sst = s_sst + sstxy(i,j)
            zzz = z(z_inv_ind(i,j))*0.001
            z_inv = z_inv + zzz
            z2_inv = z2_inv + zzz**2
-           cwpmean = cwpmean + cwp(i,j)
-           cwp2 = cwp2 + cwp(i,j)**2
+        !    cwpmean = cwpmean + cwp(i,j)
+        !    cwp2 = cwp2 + cwp(i,j)**2
            if(z_base_ind(i,j).gt.0) then
              z_cbmn = z_cbmn + z(z_base_ind(i,j))*0.001*coef
              z2_cb = z2_cb + (z(z_base_ind(i,j))*0.001)**2*coef
@@ -1215,31 +1219,15 @@ real, dimension(nzm) :: rhowcl, rhowmsecl, rhowtlcl, rhowqtcl,  &
 	 end do
 	end do
 
-	do k=1,nzm
-	 prof2(k)=0.
-	 prof3(k)=0.	 
-	 n=0
-	 if(dolongwave.or.doshortwave) then
-	   do j=1,ny
-	     do i=1,nx
-	       if(cwp(i,j).gt.cwpmax) then
-	         n=n+1
-	         prof2(k)=prof2(k)+qrad(i,j,k)
-	       else
-	         prof3(k)=prof3(k)+qrad(i,j,k)
-	       endif
-	     end do
-	   end do 
-	 end if
-	end do
 
 
-	call hbuf_put('HLADV',tadv,factor_xy*86400./dtn)
-	call hbuf_put('HLDIFF',tdiff,factor_xy*86400./dtn)
+
+	call hbuf_put('TLADV',tadv,factor_xy*86400./dtn)
+	call hbuf_put('TLDIFF',tdiff,factor_xy*86400./dtn)
 !MO	call hbuf_put('HLLAT',tlat+tlatqi,factor_xy*86400./dtn)
         tmp_out(1:nzm)=tlat(1:nzm)+tlatqi(1:nzm)             !MO 4/13/16
-	call hbuf_put('HLLAT',tmp_out,factor_xy*86400./dtn)  !MO 4/13/16
-	call hbuf_put('HLRAD',prof1,86400.)
+	call hbuf_put('TLLAT',tmp_out,factor_xy*86400./dtn)  !MO 4/13/16
+	call hbuf_put('TLRAD',prof1,86400.)
 
 
         if(dotracers) then
@@ -1262,8 +1250,6 @@ real, dimension(nzm) :: rhowcl, rhowmsecl, rhowtlcl, rhowqtcl,  &
 	call hbuf_put('RADQRLW',radqrlw,factor_xy*86400.) 	
 	call hbuf_put('RADQRSW',radqrsw,factor_xy*86400.) 	
 	call hbuf_put('RADQR',prof1,86400.) 	
-	call hbuf_put('RADQRC',prof2,86400./(n+1.e-5)) 	
-	call hbuf_put('RADQRS',prof3,86400./(nx*ny-n+1.e-5))
 
 !---------------------------------------------------------
 !  Apparent heat/moisture sources/sinks
@@ -1298,7 +1284,7 @@ real, dimension(nzm) :: rhowcl, rhowmsecl, rhowtlcl, rhowqtcl,  &
 
 	call hbuf_put('USTOR',ustor,86400.)
 	call hbuf_put('VSTOR',vstor,86400.)
-	call hbuf_put('HLSTOR',tstor,86400.)
+	call hbuf_put('TLSTOR',tstor,86400.)
 	call hbuf_put('QTSTOR',qstor,86400.*1.e3)
 
         !bloss: extra nudging/vertical large-scale advective tendency outputs
@@ -1382,178 +1368,205 @@ real, dimension(nzm) :: rhowcl, rhowmsecl, rhowtlcl, rhowqtcl,  &
 !        pri_400= 0.     ! ice precipitation flux at z=400m
 
 	do k=1,nzm
-         wup(k) = 0.
-         wdn(k) = 0.
-         wup_fr(k) = 0.
-         wdn_fr(k) = 0.
+        !  wup(k) = 0.
+        !  wdn(k) = 0.
+        !  wup_fr(k) = 0.
+        !  wdn_fr(k) = 0.
          cf_lz(k) = 0.
          cf_iz(k) = 0.
-	 tvz(k) = 0.
-	 qcz(k) = 0.
-	 qiz(k) = 0.
-	 qsatwz(k) = 0.
-         kc = min(k+1,nzm)
-	 do j=1,ny
-	  do i=1,nx
-	    tvz(k) = tvz(k) + tvirt(i,j,k)
-	    qcz(k) = qcz(k) + (qcl(i,j,k) + qpl(i,j,k))
-	    qiz(k) = qiz(k) + (qci(i,j,k) + qpi(i,j,k))
-	    qsatwz(k) = qsatwz(k)+qsatw(tabs(i,j,k),pres(k))
-            www=0.5*(w(i,j,kc)+w(i,j,k))
-            if (www > 0.) then
-              wup(k) = wup(k) + www
-              wup_fr(k) = wup_fr(k) + 1.
-            else
-              wdn(k) = wdn(k) + www
-              wdn_fr(k) = wdn_fr(k) + 1.
-            end if
-	  end do
-	 end do
-	 tvz(k) = tvz(k)*factor_xy
-	 qcz(k) = qcz(k)*factor_xy
-	 qiz(k) = qiz(k)*factor_xy	 
-	 qsatwz(k) = qsatwz(k)*factor_xy
-	 wup_fr(k) = wup_fr(k) * factor_xy
-         wdn_fr(k) = wdn_fr(k) * factor_xy
-	 wup(k) = wup(k) * factor_xy
-         wdn(k) = wdn(k) * factor_xy
+	!  tvz(k) = 0.
+	!  qcz(k) = 0.
+	!  qiz(k) = 0.
+	!  qsatwz(k) = 0.
+    !      kc = min(k+1,nzm)
+	!  do j=1,ny
+	!   do i=1,nx
+	!     tvz(k) = tvz(k) + tvirt(i,j,k)
+	!     qcz(k) = qcz(k) + (qcl(i,j,k) + qpl(i,j,k))
+	!     qiz(k) = qiz(k) + (qci(i,j,k) + qpi(i,j,k))
+	!     qsatwz(k) = qsatwz(k)+qsatw(tabs(i,j,k),pres(k))
+    !         www=0.5*(w(i,j,kc)+w(i,j,k))
+    !         if (www > 0.) then
+    !           wup(k) = wup(k) + www
+    !           wup_fr(k) = wup_fr(k) + 1.
+    !         else
+    !           wdn(k) = wdn(k) + www
+    !           wdn_fr(k) = wdn_fr(k) + 1.
+    !         end if
+	!   end do
+	!  end do
+	!  tvz(k) = tvz(k)*factor_xy
+	!  qcz(k) = qcz(k)*factor_xy
+	!  qiz(k) = qiz(k)*factor_xy	 
+	!  qsatwz(k) = qsatwz(k)*factor_xy
+	!  wup_fr(k) = wup_fr(k) * factor_xy
+    !      wdn_fr(k) = wdn_fr(k) * factor_xy
+	!  wup(k) = wup(k) * factor_xy
+    !      wdn(k) = wdn(k) * factor_xy
 	end do
 
-	if(dompi) then
-	  do k=1,nzm
-	    buffer(k,1) = tvz(k)
-	    buffer(k,2) = qcz(k)
-	    buffer(k,3) = qiz(k)
-	    buffer(k,4) = qsatwz(k)
-	    buffer(k,5) = wup_fr(k)
-	    buffer(k,6) = wdn_fr(k)
-	    buffer(k,7) = wup(k)
-	    buffer(k,8) = wdn(k)
-	  end do
-	  call task_sum_real(buffer,buffer1,nzm*8)
-	  do k=1,nzm
-	    tvz(k) = buffer1(k,1) * factor_n
-	    qcz(k) = buffer1(k,2) * factor_n
-	    qiz(k) = buffer1(k,3) * factor_n
-	    qsatwz(k) = buffer1(k,4) * factor_n
-	    wup_fr(k) = buffer1(k,5) * factor_n
-	    wdn_fr(k) = buffer1(k,6) * factor_n
-	    wup(k) = buffer1(k,7) * factor_n
-	    wdn(k) = buffer1(k,8) * factor_n
-	  end do
-	end if ! dompi
+	! if(dompi) then
+	!   do k=1,nzm
+	!     buffer(k,1) = tvz(k)
+	!     buffer(k,2) = qcz(k)
+	!     buffer(k,3) = qiz(k)
+	!     buffer(k,4) = qsatwz(k)
+	!     buffer(k,5) = wup_fr(k)
+	!     buffer(k,6) = wdn_fr(k)
+	!     buffer(k,7) = wup(k)
+	!     buffer(k,8) = wdn(k)
+	!   end do
+	!   call task_sum_real(buffer,buffer1,nzm*8)
+	!   do k=1,nzm
+	!     tvz(k) = buffer1(k,1) * factor_n
+	!     qcz(k) = buffer1(k,2) * factor_n
+	!     qiz(k) = buffer1(k,3) * factor_n
+	!     qsatwz(k) = buffer1(k,4) * factor_n
+	!     wup_fr(k) = buffer1(k,5) * factor_n
+	!     wdn_fr(k) = buffer1(k,6) * factor_n
+	!     wup(k) = buffer1(k,7) * factor_n
+	!     wdn(k) = buffer1(k,8) * factor_n
+	!   end do
+	! end if ! dompi
 
 
-	do j=1,ny
-	 do i=1,nx
-	   lwp(i,j)=0.
-	   iwp(i,j)=0.
-	 end do
-	end do
+	! do j=1,ny
+	!  do i=1,nx
+	!    lwp(i,j)=0.
+	!    iwp(i,j)=0.
+	!  end do
+	! end do
 
-        cldclmn(:,:) = 0.
-        zctl_xy(:,:) = 0.
-        zctl_xy(:,:) = 0.
+	cldclmn(:,:) = 0.
+	! zctl_xy(:,:) = 0.
+	! zctl_xy(:,:) = 0.
 !MO4/13/16        zinv_xy(:,:) = 0.
 
-        do k=nzm,1,-1
-         wup(k) = wup(k) / max(wup_fr(k),factor_xy)     !MO 4/13/16
-         wdn(k) = wdn(k) / max(wdn_fr(k),factor_xy)     !MO 4/13/16
+	do k=nzm,1,-1
+    !  wup(k) = wup(k) / max(wup_fr(k),factor_xy)     !MO 4/13/16
+    !  wdn(k) = wdn(k) / max(wdn_fr(k),factor_xy)     !MO 4/13/16
 
-	 tmp(1)=rho(k)*adzw(k)*dz
+	!  tmp(1)=rho(k)*adzw(k)*dz
 	 do j=1,ny
 	  do i=1,nx
-            if ((qcl(i,j,k)+qpl(i,j,k))>1.e-7) then
-              cf_lz(k) = cf_lz(k) + 1.
-              if (cldclmn(i,j).eq.0.) then
-                zctl_xy(i,j) = k
-                cldclmn(i,j) = 1.
-              end if
-              if (cldclmn(i,j).eq.1. ) zcbl_xy(i,j) = k
-            end if !      (qcl(i,j,k)+qpl(i,j,k))>1.e-7)
-
-            if ((qci(i,j,k)+qpi(i,j,k)) >1.e-7) then
-              cf_iz(k) = cf_iz(k) + 1.
-            endif
-
-	    lwp(i,j)=lwp(i,j)+tmp(1)*(qcl(i,j,k)+qpl(i,j,k))
-	    iwp(i,j)=iwp(i,j)+tmp(1)*(qci(i,j,k)+qpi(i,j,k))
-
+	   ! For height-resolved cloud fractions, use qcl and qci.
+	   ! But for cloudy grid columns (CLDSHD), use qcl+qpl and qci+qpi.
+	   ! Not sure if this is the best way to do it - Heng Xiao, 03/26/2025 
+       if (qcl(i,j,k)>1.e-12) cf_lz(k) = cf_lz(k) + 1.
+	   if (qci(i,j,k)>1.e-12) cf_iz(k) = cf_iz(k) + 1.
+       if ((qcl(i,j,k)+qpl(i,j,k))>1.e-12 .or. (qci(i,j,k)+qpi(i,j,k)) >1.e-12) then
+		if (cldclmn(i,j).eq.0.) then
+        !    zctl_xy(i,j) = k
+           cldclmn(i,j) = 1.
+		   s_acld = s_acld + 1.
+         end if
+        !  if (cldclmn(i,j).eq.1. ) zcbl_xy(i,j) = k
+       end if !      (qcl(i,j,k)+qci(i,j,k)+qpl(i,j,k))>1.e-7)
+	!    lwp(i,j)=lwp(i,j)+tmp(1)*(qcl(i,j,k)+qpl(i,j,k))
+	!    iwp(i,j)=iwp(i,j)+tmp(1)*(qci(i,j,k)+qpi(i,j,k))
 	  end do
 	 end do
-         cf_lz(k) = cf_lz(k) * factor_xy
-         cf_iz(k) = cf_iz(k) * factor_xy
-         lwpa = lwpa + tmp(1)*qcz(k)
-         iwpa = iwpa + tmp(1)*qiz(k)
+    !  cf_lz(k) = cf_lz(k) * factor_xy
+    !  cf_iz(k) = cf_iz(k) * factor_xy
+    !  lwpa = lwpa + tmp(1)*qcz(k)
+    !  iwpa = iwpa + tmp(1)*qiz(k)
 	end do
 
-        do j=1,ny
-	 do i=1,nx
-           if (cldclmn(i,j).eq.1.) then
-             k = zctl_xy(i,j)
-             kc = min(k+1,nzm) 
-             zctl = zctl + z(k) + (z(kc)-z(k))*(1.-1.e-7/(qcl(i,j,k)+qpl(i,j,k)))
-             k = zcbl_xy(i,j)
-             kb = max(k-1,1) 
-             zcbl = zcbl + z(k) - (z(k)-z(kb))*(1.-1.e-7/(qcl(i,j,k)+qpl(i,j,k)))
-           end if
-           zinv = zinv + zinv_xy(i,j)
-         end do
-        end do
+    !     do j=1,ny
+	!  do i=1,nx
+    !        if (cldclmn(i,j).eq.1.) then
+    !          k = zctl_xy(i,j)
+    !          kc = min(k+1,nzm) 
+    !          zctl = zctl + z(k) + (z(kc)-z(k))*(1.-1.e-7/(qcl(i,j,k)+qpl(i,j,k)))
+    !          k = zcbl_xy(i,j)
+    !          kb = max(k-1,1) 
+    !          zcbl = zcbl + z(k) - (z(k)-z(kb))*(1.-1.e-7/(qcl(i,j,k)+qpl(i,j,k)))
+    !        end if
+    !        zinv = zinv + zinv_xy(i,j)
+    !      end do
+    !     end do
         ! s_acld = sum(cldclmn(:,:)) * factor_xy    ! cloud fraction
         ! All the averaging for s_acld is done elsewhere, only accumulation here!
-        s_acld = s_acld + sum(cldclmn(:,:))
-        zctl = zctl * factor_xy
-        zcbl = zcbl * factor_xy
-        zinv = zinv * factor_xy
+        ! zctl = zctl * factor_xy
+        ! zcbl = zcbl * factor_xy
+        ! zinv = zinv * factor_xy
 
-	if(dompi) then
-	  do k=1,nzm
-	    buffer(k,1) = cf_lz(k)
-	    buffer(k,2) = cf_iz(k)
-	  end do
-          buffer(1,3) = lwpa
-	  buffer(2,3) = iwpa
-	  buffer(3,3) = s_acld
-	  buffer(4,3) = zctl
-	  buffer(5,3) = zcbl
-          buffer(6,3) = zinv
-	  call task_sum_real(buffer,buffer1,nzm*3)
-	  do k=1,nzm
-	    cf_lz(k) = buffer1(k,1) * factor_n
-	    cf_iz(k) = buffer1(k,2) * factor_n
-	  end do
-          lwpa = buffer1(1,3) * factor_n
-          iwpa = buffer1(2,3) * factor_n
-	  s_acld = buffer1(3,3) * factor_n
-	  zctl = buffer1(4,3) * factor_n
-	  zcbl = buffer1(5,3) * factor_n
-          zinv = buffer1(6,3) * factor_n
-	end if ! dompi
-        if (s_acld > 0.) then
-	  zctl = zctl / s_acld
-	  zcbl = zcbl / s_acld
-        else 
-	  zctl = 0.
-	  zcbl = 0.
-        end if
-
-	do j=1,ny
-	 do i=1,nx
-	   lwp_var = lwp_var + (lwp(i,j) - lwpa)**2
-	   iwp_var = iwp_var + (iwp(i,j) - iwpa)**2
-	 end do
+	! moved this part to be after cldclmn calculation
+	! Heng Xiao, 04/04/2025
+	do k=1,nzm
+		prof2(k)=0.
+		prof3(k)=0.	 
+		n=0
+		if(dolongwave.or.doshortwave) then
+			do j=1,ny
+			do i=1,nx
+				if(cldclmn(i,j).eq.1) then
+				n=n+1
+				prof2(k)=prof2(k)+qrad(i,j,k)
+				else
+				prof3(k)=prof3(k)+qrad(i,j,k)
+				endif
+			end do
+			end do 
+		end if
 	end do
-	lwp_var = lwp_var * factor_xy
-	iwp_var = iwp_var * factor_xy
 
-        call hbuf_put('CF_L',cf_lz,1.)         ! 
-        call hbuf_put('CF_I',cf_iz,1.)         !   
-        call hbuf_put('WUP_FR',wup_fr,1.)      ! 
-        call hbuf_put('WDN_FR',wdn_fr,1.)      !
+	call hbuf_put('RADQRC',prof2,86400./(n+1.e-5)) 	
+	call hbuf_put('RADQRS',prof3,86400./(nx*ny-n+1.e-5))
 
-        call hbuf_put('WUP',wup,1.)
-        call hbuf_put('WDN',wdn,1.)
+	call hbuf_put('CF_L',cf_lz,factor_xy)
+	call hbuf_put('CF_I',cf_iz,factor_xy)
+	! keeping the following for now, but lwpa, iwpa, zctl, zcbl, zinv are not calculated anymore.
+	! s_acld = s_acld + sum(cldclmn(:,:))
+	! Note: This part of the code is very confusing for the calculation of s_acld ("CLDSHD" in stats output) because Mikhail didn't exactly follow the SAM conventions for stat collection.  In the line commented out above s_acld is the sum of all cloudy columns in a subdomain and is actually accumulated in time between statistics output in each subdomain. Then in the code below s_acld is passed around and averaged over all the subdomains. This last step usually is done in hbuffer.f90 (hbuf_write). Here Mikhail added it to calculate his own version of zctl etc. I am reverting the s_acld calculation to the original SAM way (similar to s_ar) as I don't output Mikhail's version of zctl etc. anymore.  Heng Xiao, 04/04/2025
+
+	! if(dompi) then
+	!   do k=1,nzm
+	!     buffer(k,1) = cf_lz(k)
+	!     buffer(k,2) = cf_iz(k)
+	!   end do
+    !       buffer(1,3) = lwpa
+	!   buffer(2,3) = iwpa
+	!   buffer(3,3) = s_acld
+	!   buffer(4,3) = zctl
+	!   buffer(5,3) = zcbl
+    !       buffer(6,3) = zinv
+	!   call task_sum_real(buffer,buffer1,nzm*3)
+	!   do k=1,nzm
+	!     cf_lz(k) = buffer1(k,1) * factor_n
+	!     cf_iz(k) = buffer1(k,2) * factor_n
+	!   end do
+    !       lwpa = buffer1(1,3) * factor_n
+    !       iwpa = buffer1(2,3) * factor_n
+	!   s_acld = buffer1(3,3) * factor_n
+	!   zctl = buffer1(4,3) * factor_n
+	!   zcbl = buffer1(5,3) * factor_n
+    !       zinv = buffer1(6,3) * factor_n
+	! end if ! dompi
+    !     if (s_acld > 0.) then
+	!   zctl = zctl / s_acld
+	!   zcbl = zcbl / s_acld
+    !     else 
+	!   zctl = 0.
+	!   zcbl = 0.
+    !     end if
+
+	! do j=1,ny
+	!  do i=1,nx
+	!    lwp_var = lwp_var + (lwp(i,j) - lwpa)**2
+	!    iwp_var = iwp_var + (iwp(i,j) - iwpa)**2
+	!  end do
+	! end do
+	! lwp_var = lwp_var * factor_xy
+	! iwp_var = iwp_var * factor_xy
+
+	! call hbuf_put('CF_L',cf_lz,1.)         ! 
+	! call hbuf_put('CF_I',cf_iz,1.)         !   
+	! call hbuf_put('WUP_FR',wup_fr,1.)      ! 
+	! call hbuf_put('WDN_FR',wdn_fr,1.)      !
+
+	! call hbuf_put('WUP',wup,1.)
+	! call hbuf_put('WDN',wdn,1.)
 
 ! END ISDAC ADDITIONS
 !===================================================

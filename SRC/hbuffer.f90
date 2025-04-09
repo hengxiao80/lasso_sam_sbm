@@ -576,7 +576,7 @@ if(dompi) then
    z2_inv=z2_inv*factor*aver-(z_inv*factor*aver)**2
    z2_cb=z2_cb*factor-(z_cbmn*factor)**2
    z2_ct=z2_ct*factor-(z_ctmn*factor)**2
-   cwp2=cwp2*factor*aver-(cwpmean*factor*aver)**2
+   ! cwp2=cwp2*factor*aver-(cwpmean*factor*aver)**2
    prec2=prec2*factor*aver-(precmean*factor*aver)**2
 
 endif
@@ -638,30 +638,95 @@ if(masterproc) then
 
   print *,'Writting history file ',caseid
   write(ntape)  caseid, version
-  write(ntape)  day-nstat*dt/2./86400.,dt,nstep,nx,ny,nz,nzm, &
-                dx,dy,dz,adz,z,pres,real(s_sst*aver*factor)+t00,pres0, &
-                real(s_acld*aver*factor),real(s_ar*aver*factor), &
-                real(s_acldcold*aver*factor),w_max,u_max,-1.,&
-                real(s_flns*aver*factor),real(s_flnt*aver*factor),real(s_flntoa*aver*factor),&
-                real(s_flnsc*aver*factor),real(s_flntoac*aver*factor),real(s_flds*aver*factor), &
-                real(s_fsns*aver*factor),real(s_fsnt*aver*factor),real(s_fsntoa*aver*factor), &
-                real(s_fsnsc*aver*factor),real(s_fsntoac*aver*factor), &
-                real(s_fsds*aver*factor),real(s_solin*aver*factor), &
-                real(sstobs),real(lhobs*aver),real(shobs*aver), &
-                real(s_acldl*aver*factor),real(s_acldm*aver*factor),real(s_acldh*aver*factor), &
-                s_acldisccp,s_acldlisccp,s_acldmisccp,s_acldhisccp, &
-                s_acldmodis,s_acldlmodis,s_acldmmodis,s_acldhmodis,s_acldmisr, &
-                s_relmodis, s_reimodis, s_lwpmodis, s_iwpmodis, s_tbisccp, s_tbclrisccp, &
-                s_acldliqmodis, s_acldicemodis, s_cldtauisccp, s_cldalbisccp,  s_ptopisccp, &
-                s_cldtaumodis, s_cldtaulmodis, s_cldtauimodis, s_ptopmodis, s_ztopmisr, &
-                real(z_inv*aver*factor), z2_inv, &
-                real(z_ctmn*factor), z2_ct, z_ct, &
-                real(z_cbmn*factor), z2_cb, z_cb,&
-                real(cwpmean*aver*factor), cwp2, &
-                real(precmean*aver*factor), prec2, precmax, &
-!mo                ncmn, nrmn, real(s_arthr*aver*factor) 
-                ncmn, nrmn, real(s_arthr*aver*factor), &          ! mo
-                zinv, zctl, zcbl, lwpa, iwpa, lwp_var, iwp_var    ! mo
+  write(ntape)  day-nstat*dt/2./86400., &
+                dt, &
+                nstep, &
+                nx, &
+                ny, &
+                nz, &
+                nzm, &
+                dx, &
+                dy, &
+                dz, &
+                adz, &
+                z, &
+                pres, &
+                real(s_sst*aver*factor)+t00, & ! 1
+                pres0, & ! 2
+                real(s_acld*aver*factor), & ! 3
+                real(s_ar*aver*factor), & ! 4
+                real(s_acldcold*aver*factor), & ! 5
+                w_max, & ! 6
+                u_max, & ! 7
+                -1., & ! 8
+                real(s_flns*aver*factor), & ! 9
+                real(s_flnt*aver*factor), & ! 10
+                real(s_flntoa*aver*factor), & ! 11
+                real(s_flnsc*aver*factor), & ! 12
+                real(s_flntoac*aver*factor), & ! 13
+                real(s_flds*aver*factor), & ! 14
+                real(s_fsns*aver*factor), & ! 15
+                real(s_fsnt*aver*factor), & ! 16
+                real(s_fsntoa*aver*factor), & ! 17
+                real(s_fsnsc*aver*factor), & ! 18
+                real(s_fsntoac*aver*factor), & ! 19
+                real(s_fsds*aver*factor), & ! 20
+                real(s_solin*aver*factor), & ! 21
+                real(sstobs), & ! 22
+                real(lhobs*aver), & ! 23
+                real(shobs*aver), & ! 24
+                real(s_acldl*aver*factor), & ! 25
+                real(s_acldm*aver*factor), & ! 26
+                real(s_acldh*aver*factor), & ! 27
+                s_acldisccp, & ! 28
+                s_acldlisccp, & ! 29
+                s_acldmisccp, & ! 30
+                s_acldhisccp, & ! 31
+                s_acldmodis, & ! 32
+                s_acldlmodis, & ! 33
+                s_acldmmodis, & ! 34
+                s_acldhmodis, & ! 35
+                s_acldmisr, & ! 36
+                s_relmodis, & ! 37
+                s_reimodis, & ! 38
+                s_lwpmodis, & ! 39
+                s_iwpmodis, & ! 40
+                s_tbisccp, & ! 41
+                s_tbclrisccp, & ! 42
+                s_acldliqmodis, & ! 43
+                s_acldicemodis, & ! 44
+                s_cldtauisccp, & ! 45
+                s_cldalbisccp, & ! 46
+                s_ptopisccp, & ! 47
+                s_cldtaumodis, & ! 48
+                s_cldtaulmodis, & ! 49
+                s_cldtauimodis, & ! 50
+                s_ptopmodis, & ! 51
+                s_ztopmisr, & ! 52
+                real(z_inv*aver*factor), & ! 53
+                z2_inv, & ! 54
+                real(z_ctmn*factor), & ! 55
+                z2_ct, & ! 56
+                z_ct, & ! 57
+                real(z_cbmn*factor), & ! 58
+                z2_cb, & ! 59
+                z_cb, & ! 60
+                real(cwpmean*aver*factor), & ! 61
+                cwp2, & ! 62
+                real(precmean*aver*factor), & ! 63
+                prec2, & ! 64
+                precmax, & ! 65
+                ncmn, & ! 66
+                nrmn, & ! 67
+                real(s_arthr*aver*factor) ! 68
+                ! these are not actually read in and processed by stat2nc.
+               !  zinv, & ! 69
+               !  zctl, & ! 70
+               !  zcbl, & ! 71
+               !  lwpa, & ! 72
+               !  iwpa, & ! 73
+               !  lwp_var, & ! 74
+               !  iwp_var ! 75
  
   write(ntape) length
   

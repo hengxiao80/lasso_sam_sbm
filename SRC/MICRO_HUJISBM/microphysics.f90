@@ -207,18 +207,18 @@ real sedi_tend(dimx1_s:dimx2_s,dimy1_s:dimy2_s, nzm)
 real frzl_tend(nx, ny, nzm)
 real qvbf(nx, ny, nzm)
 real qvaf(nx, ny, nzm)
-real qvtend_adv(nx, ny, nzm)
-real qltend_adv(nx, ny, nzm)
-real qitend_adv(nx, ny, nzm)
-real qvst(nx, ny, nzm)
-real qvend(nx, ny, nzm)
-real qvtend(nx, ny, nzm)
-real qlst(nx, ny, nzm)
-real qlend(nx, ny, nzm)
-real qltend(nx, ny, nzm)
-real qist(nx, ny, nzm)
-real qiend(nx, ny, nzm)
-real qitend(nx, ny, nzm)
+! real qvtend_adv(nx, ny, nzm)
+! real qltend_adv(nx, ny, nzm)
+! real qitend_adv(nx, ny, nzm)
+! real qvst(nx, ny, nzm)
+! real qvend(nx, ny, nzm)
+! real qvtend(nx, ny, nzm)
+! real qlst(nx, ny, nzm)
+! real qlend(nx, ny, nzm)
+! real qltend(nx, ny, nzm)
+! real qist(nx, ny, nzm)
+! real qiend(nx, ny, nzm)
+! real qitend(nx, ny, nzm)
 ! for qni100
 real qni100(nx, ny, nzm)  ! total ice number concentration [/L]
 real qnic100(nx, ny, nzm)  ! ice1 number concentration [/L]
@@ -1333,16 +1333,15 @@ end subroutine micro_print
      &      +ffcd(I,j,k,KR)*COL
           QNC(I,j,k)=QNC(I,j,k) &
      &      +COL*ffcd(I,j,k,KR)/XL(KR)*rhocgs(k)
-! calculate effcs - Fandec11 for v6.9.4
-        top = top+ffcd(I,j,k,KR)*rhocgs(k)/XL(KR)*DROPRADII(KR)**3
-        bottom = bottom+ffcd(I,j,k,KR)*rhocgs(k)/XL(KR)*DROPRADII(KR)**2
-
         ELSE
           QR(I,j,k)=QR(I,j,k) &
      &      +COL*ffcd(I,j,k,KR)
           QNR(I,j,k)=QNR(I,j,k) &
      &      +COL*ffcd(I,j,k,KR)/XL(KR)*rhocgs(k)
         END IF
+        ! calculate effcs - Fandec11 for v6.9.4
+        top = top+ffcd(I,j,k,KR)*rhocgs(k)/XL(KR)*DROPRADII(KR)**3
+        bottom = bottom+ffcd(I,j,k,KR)*rhocgs(k)/XL(KR)*DROPRADII(KR)**2
       END DO
 ! calculate effcs - Fandec11 for v6.9.4
 !        if (bottom > 0.) then
@@ -2103,18 +2102,18 @@ subroutine micro_diagnose()
      do i=1,nx
        qv(i,j,k) = qt(i,j,k) - (qc(i,j,k)+qr(i,j,k)+qi(i,j,k)+qs(i,j,k)+    &
                    qg(i,j,k)+qh(i,j,k))
-!       qcl(i,j,k) = qc(i,j,k)
-!       qci(i,j,k) = qi(i,j,k)
-!       qpl(i,j,k) = qr(i,j,k)
-!       qpi(i,j,k) = qs(i,j,k) + qg(i,j,k) + qh(i,j,k)
+       qcl(i,j,k) = qc(i,j,k)
+       qci(i,j,k) = qi(i,j,k)
+       qpl(i,j,k) = qr(i,j,k)
+       qpi(i,j,k) = qs(i,j,k) + qg(i,j,k) + qh(i,j,k)
 
 !mo For DYCOMS and ISDAC get all condenced liquid water into the "cloud water" 
 !mo   for radiation and other purposes
 !
-       qcl(i,j,k) = qc(i,j,k) + qr(i,j,k)
-       qci(i,j,k) = qi(i,j,k)
-       qpl(i,j,k) = 0
-       qpi(i,j,k) = qs(i,j,k) + qg(i,j,k) + qh(i,j,k)
+      !  qcl(i,j,k) = qc(i,j,k) + qr(i,j,k)
+      !  qci(i,j,k) = qi(i,j,k)
+      !  qpl(i,j,k) = 0
+      !  qpi(i,j,k) = qs(i,j,k) + qg(i,j,k) + qh(i,j,k)
                                                                                                
      end do
     end do
@@ -2563,7 +2562,7 @@ subroutine micro_hbuf_init(namelist,deflist,unitlist,status,average_type,count,t
    count = count + 1
    trcount = trcount + 1
    namelist(count) = 'QTFLUX'
-   deflist(count) = 'Nonprecipitating water flux (Total)'
+   deflist(count) = 'Total water (including precip.) flux (Total)'
    unitlist(count) = 'W/m2'
    status(count) = 1
    average_type(count) = 0
@@ -2571,26 +2570,26 @@ subroutine micro_hbuf_init(namelist,deflist,unitlist,status,average_type,count,t
    count = count + 1
    trcount = trcount + 1
    namelist(count) = 'QTFLUXS'
-   deflist(count) = 'Nonprecipitating-water flux (SGS)'
+   deflist(count) = 'Total water (including precip.) flux (SGS)'
    unitlist(count) = 'W/m2'
    status(count) = 1
    average_type(count) = 0
                                                                                                                 
-   count = count + 1
-   trcount = trcount + 1
-   namelist(count) = 'QPFLUX'
-   deflist(count) = 'Precipitating-water turbulent flux (Total)'
-   unitlist(count) = 'W/m2'
-   status(count) = 1
-   average_type(count) = 0
+  !  count = count + 1
+  !  trcount = trcount + 1
+  !  namelist(count) = 'QPFLUX'
+  !  deflist(count) = 'Precipitating-water turbulent flux (Total)'
+  !  unitlist(count) = 'W/m2'
+  !  status(count) = 1
+  !  average_type(count) = 0
                                                                                                                 
-   count = count + 1
-   trcount = trcount + 1
-   namelist(count) = 'QPFLUXS'
-   deflist(count) = 'Precipitating-water turbulent flux (SGS)'
-   unitlist(count) = 'W/m2'
-   status(count) = 1
-   average_type(count) = 0
+  !  count = count + 1
+  !  trcount = trcount + 1
+  !  namelist(count) = 'QPFLUXS'
+  !  deflist(count) = 'Precipitating-water turbulent flux (SGS)'
+  !  unitlist(count) = 'W/m2'
+  !  status(count) = 1
+  !  average_type(count) = 0
 
    count = count + 1
    trcount = trcount + 1
@@ -2772,29 +2771,29 @@ subroutine micro_hbuf_init(namelist,deflist,unitlist,status,average_type,count,t
    status(count) = 1
    average_type(count) = 0
 
-   count = count + 1
-   trcount = trcount + 1
-   namelist(count) = 'QVADVT'
-   deflist(count) = 'Water vapor tendency due to advection'
-   unitlist(count) = 'g/kg/s'
-   status(count) = 1
-   average_type(count) = 0
+  !  count = count + 1
+  !  trcount = trcount + 1
+  !  namelist(count) = 'QVADVT'
+  !  deflist(count) = 'Water vapor tendency due to advection'
+  !  unitlist(count) = 'g/kg/s'
+  !  status(count) = 1
+  !  average_type(count) = 0
 
-   count = count + 1
-   trcount = trcount + 1
-   namelist(count) = 'QLADVT'
-   deflist(count) = 'Liquid water tendency due to advection'
-   unitlist(count) = 'g/kg/s'
-   status(count) = 1
-   average_type(count) = 0
+  !  count = count + 1
+  !  trcount = trcount + 1
+  !  namelist(count) = 'QLADVT'
+  !  deflist(count) = 'Liquid water tendency due to advection'
+  !  unitlist(count) = 'g/kg/s'
+  !  status(count) = 1
+  !  average_type(count) = 0
 
-   count = count + 1
-   trcount = trcount + 1
-   namelist(count) = 'QIADVT'
-   deflist(count) = 'Ice water tendency due to advection'
-   unitlist(count) = 'g/kg/s'
-   status(count) = 1
-   average_type(count) = 0
+  !  count = count + 1
+  !  trcount = trcount + 1
+  !  namelist(count) = 'QIADVT'
+  !  deflist(count) = 'Ice water tendency due to advection'
+  !  unitlist(count) = 'g/kg/s'
+  !  status(count) = 1
+  !  average_type(count) = 0
 
    count = count + 1
    trcount = trcount + 1
@@ -2804,45 +2803,45 @@ subroutine micro_hbuf_init(namelist,deflist,unitlist,status,average_type,count,t
    status(count) = 1
    average_type(count) = 0
 
-   count = count + 1
-   trcount = trcount + 1
-   namelist(count) = 'Ze'
-   deflist(count) = 'Radar reflect. (include attenu.) for Qi>0.1 kg/kg'
-   unitlist(count) = 'dBZ'
-   status(count) = 1
-   average_type(count) = 0
+  !  count = count + 1
+  !  trcount = trcount + 1
+  !  namelist(count) = 'Ze'
+  !  deflist(count) = 'Radar reflect. (include attenu.) for Qi>0.1 kg/kg'
+  !  unitlist(count) = 'dBZ'
+  !  status(count) = 1
+  !  average_type(count) = 0
 
-   count = count + 1
-   trcount = trcount + 1
-   namelist(count) = 'VI_Ze'
-   deflist(count) = 'Ze-weighted ice fall velocity for Qi>0.1 kg/kg'
-   unitlist(count) = 'm/s'
-   status(count) = 1
-   average_type(count) = 0
+  !  count = count + 1
+  !  trcount = trcount + 1
+  !  namelist(count) = 'VI_Ze'
+  !  deflist(count) = 'Ze-weighted ice fall velocity for Qi>0.1 kg/kg'
+  !  unitlist(count) = 'm/s'
+  !  status(count) = 1
+  !  average_type(count) = 0
 
-   count = count + 1
-   trcount = trcount + 1
-   namelist(count) = 'QVTENDT'
-   deflist(count) = 'Total water vapor tendency'
-   unitlist(count) = 'g/kg/s'
-   status(count) = 1
-   average_type(count) = 0
+  !  count = count + 1
+  !  trcount = trcount + 1
+  !  namelist(count) = 'QVTENDT'
+  !  deflist(count) = 'Total water vapor tendency'
+  !  unitlist(count) = 'g/kg/s'
+  !  status(count) = 1
+  !  average_type(count) = 0
 
-   count = count + 1
-   trcount = trcount + 1
-   namelist(count) = 'QLTENDT'
-   deflist(count) = 'Total liquid water tendency'
-   unitlist(count) = 'g/kg/s'
-   status(count) = 1
-   average_type(count) = 0
+  !  count = count + 1
+  !  trcount = trcount + 1
+  !  namelist(count) = 'QLTENDT'
+  !  deflist(count) = 'Total liquid water tendency'
+  !  unitlist(count) = 'g/kg/s'
+  !  status(count) = 1
+  !  average_type(count) = 0
 
-   count = count + 1
-   trcount = trcount + 1
-   namelist(count) = 'QITENDT'
-   deflist(count) = 'Total ice water tendency'
-   unitlist(count) = 'g/kg/s'
-   status(count) = 1
-   average_type(count) = 0
+  !  count = count + 1
+  !  trcount = trcount + 1
+  !  namelist(count) = 'QITENDT'
+  !  deflist(count) = 'Total ice water tendency'
+  !  unitlist(count) = 'g/kg/s'
+  !  status(count) = 1
+  !  average_type(count) = 0
 !... etc.
 
 end subroutine micro_hbuf_init
@@ -2865,8 +2864,10 @@ subroutine micro_statistics()
   real qinz(nzm)
 ! added for sheba output
   real vfi_mwz(nzm), diffuiratez(nzm), difful_tendz(nzm), sedl_tendz(nzm),sedi_tendz(nzm)
-  real frzl_tendz(nzm), qvtend_advz(nzm), qltend_advz(nzm), qitend_advz(nzm)
-  real qni100z(nzm), qvtendz(nzm), qltendz(nzm),qitendz(nzm)
+  real frzl_tendz(nzm)
+  ! real frzl_tendz(nzm), qvtend_advz(nzm), qltend_advz(nzm), qitend_advz(nzm)
+  ! real qni100z(nzm), qvtendz(nzm), qltendz(nzm),qitendz(nzm)
+  real qni100z(nzm)
 
   real factor_vol(nzm), ct1
   integer i,j,k,m
@@ -2878,10 +2879,10 @@ subroutine micro_statistics()
       tmp(2) = tmp(1) / dtn
       mkwsb(k,1) = mkwsb(k,1) * tmp(1) * rhow(k) * lcond
       mkwle(k,1) = mkwle(k,1)*tmp(2)*rhow(k)*lcond + mkwsb(k,1)
-      if(docloud.and.doprecip) then
-        mkwsb(k,2) = mkwsb(k,2) * tmp(1) * rhow(k) * lcond
-        mkwle(k,2) = mkwle(k,2)*tmp(2)*rhow(k)*lcond + mkwsb(k,2)
-      endif
+      ! if(docloud.and.doprecip) then
+      !   mkwsb(k,2) = mkwsb(k,2) * tmp(1) * rhow(k) * lcond
+      !   mkwle(k,2) = mkwle(k,2)*tmp(2)*rhow(k)*lcond + mkwsb(k,2)
+      ! endif
   end do
 
   ! commented out by Heng XIAO --- 12/18/2024
@@ -2899,8 +2900,8 @@ subroutine micro_statistics()
 !  call hbuf_put('QCFLUXS',mkwsb(:,4),factor_xy)
   call hbuf_put('QTFLUX',mkwle(:,1),factor_xy)
   call hbuf_put('QTFLUXS',mkwsb(:,1),factor_xy)
-  call hbuf_put('QPFLUX',mkwle(:,2),factor_xy)
-  call hbuf_put('QPFLUXS',mkwsb(:,2),factor_xy)
+  ! call hbuf_put('QPFLUX',mkwle(:,2),factor_xy)
+  ! call hbuf_put('QPFLUXS',mkwsb(:,2),factor_xy)
 ! for the statistics from radar simulator
 !  if (masterproc) print*, 'Ze', maxval(Zez), maxval(V_doppiz)
 !    call hbuf_put('Ze',Zez,1.)
@@ -2938,12 +2939,12 @@ enddo
     sedl_tendz(k) = 0.
     sedi_tendz(k) = 0.
     frzl_tendz(k) = 0.
-    qvtend_advz(k) = 0.
-    qltend_advz(k) = 0.
-    qitend_advz(k) = 0.
-    qvtendz(k)  = 0.
-    qltendz(k)  = 0.
-    qitendz(k)  = 0.
+    ! qvtend_advz(k) = 0.
+    ! qltend_advz(k) = 0.
+    ! qitend_advz(k) = 0.
+    ! qvtendz(k)  = 0.
+    ! qltendz(k)  = 0.
+    ! qitendz(k)  = 0.
 
     qni100z(k) = 0.
 
@@ -2975,12 +2976,12 @@ enddo
       sedl_tendz(k)=sedl_tendz(k)+sedl_tend(i,j,k)
       sedi_tendz(k)=sedi_tendz(k)+sedi_tend(i,j,k)
       frzl_tendz(k)=frzl_tendz(k)+frzl_tend(i,j,k)
-      qvtend_advz(k)=qvtend_advz(k)+qvtend_adv(i,j,k)
-      qltend_advz(k)=qltend_advz(k)+qltend_adv(i,j,k)
-      qitend_advz(k)=qitend_advz(k)+qitend_adv(i,j,k)
-      qvtendz(k)=qvtendz(k)+qvtend(i,j,k)
-      qltendz(k)=qltendz(k)+qltend(i,j,k)
-      qitendz(k)=qitendz(k)+qitend(i,j,k)
+      ! qvtend_advz(k)=qvtend_advz(k)+qvtend_adv(i,j,k)
+      ! qltend_advz(k)=qltend_advz(k)+qltend_adv(i,j,k)
+      ! qitend_advz(k)=qitend_advz(k)+qitend_adv(i,j,k)
+      ! qvtendz(k)=qvtendz(k)+qvtend(i,j,k)
+      ! qltendz(k)=qltendz(k)+qltend(i,j,k)
+      ! qitendz(k)=qitendz(k)+qitend(i,j,k)
 
       if ((qi(i,j,k)+qs(i,j,k)+qg(i,j,k)+qh(i,j,k)) >1.e-7) then
       vfi_mwz(k)=vfi_mwz(k)+vfice_mw(i,j,k)
@@ -3032,12 +3033,12 @@ enddo
   call hbuf_put('SEDLTEND',sedl_tendz,1.e3*factor_xy)  ! g/kg/s
   call hbuf_put('SEDITEND',sedi_tendz,1.e3*factor_xy)  ! g/kg/s
   call hbuf_put('FRZTEND',frzl_tendz,1.e3*factor_xy)  ! g/kg/s
-  call hbuf_put('QVADVT',qvtend_advz,1.e3*factor_xy)  ! g/kg/s
-  call hbuf_put('QLADVT',qltend_advz,1.e3*factor_xy)  ! g/kg/s
-  call hbuf_put('QIADVT',qitend_advz,1.e3*factor_xy)  ! g/kg/s
-  call hbuf_put('QVTENDT',qvtendz,1.e3*factor_xy)  ! g/kg/s
-  call hbuf_put('QLTENDT',qltendz,1.e3*factor_xy)  ! g/kg/s
-  call hbuf_put('QITENDT',qitendz,1.e3*factor_xy)  ! g/kg/s
+  ! call hbuf_put('QVADVT',qvtend_advz,1.e3*factor_xy)  ! g/kg/s
+  ! call hbuf_put('QLADVT',qltend_advz,1.e3*factor_xy)  ! g/kg/s
+  ! call hbuf_put('QIADVT',qitend_advz,1.e3*factor_xy)  ! g/kg/s
+  ! call hbuf_put('QVTENDT',qvtendz,1.e3*factor_xy)  ! g/kg/s
+  ! call hbuf_put('QLTENDT',qltendz,1.e3*factor_xy)  ! g/kg/s
+  ! call hbuf_put('QITENDT',qitendz,1.e3*factor_xy)  ! g/kg/s
 !  call hbuf_avg_put('QC',qc,1,nx,1,ny,nzm,1.e+3)     ! [g/kg]
 !  call hbuf_avg_put('QR',qr,1,nx,1,ny,nzm,1.e+3)     ! [g/kg]
 !  call hbuf_avg_put('QI',qi,1,nx,1,ny,nzm,1.e+3)     ! [g/kg]

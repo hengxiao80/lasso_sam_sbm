@@ -19,13 +19,15 @@ character*7 filestatus
 real coef
 logical, save :: notopend2D=.true.
 
-nfields= 30
+! nfields= 30
+! nfields= 27 ! removing u200, v200, w500 - Heng Xiao 
+nfields= 29 ! adding plwp, piwp
 if(.not.dolongwave) nfields = nfields-4
 if(.not.doshortwave) nfields = nfields-5
 if(.not.dodynamicocean) nfields=nfields-1
 if(.not.((ocean_type.ne.0.or.dodynamicocean).and..not.dossthomo)) &
                  nfields=nfields-1
-if(.not.doprecip) nfields = nfields-1
+if(.not.doprecip) nfields = nfields-3
 if(.not.docloud) nfields = nfields-3
 if(SFC_FLX_FXD) nfields = nfields-2
 nfields1=0
@@ -299,8 +301,8 @@ if(docloud) then
        cw_xy(i,j) = 0.
      end do
    end do
-  name='CWP'
-  long_name='Cloud Water Path'
+  name='CLWP'
+  long_name='Cloud Liquid Water Path'
   units='mm'
   call compress3D(tmp,nx,ny,1,name,long_name,units, &
                                save2Dbin,dompi,rank,nsubdomains)
@@ -312,8 +314,8 @@ if(docloud) then
        iw_xy(i,j) = 0.
      end do
    end do
-  name='IWP'
-  long_name='Ice Path'
+  name='CIWP'
+  long_name='Cloud Ice Water Path'
   units='mm'
   call compress3D(tmp,nx,ny,1,name,long_name,units, &
                                save2Dbin,dompi,rank,nsubdomains)
@@ -330,6 +332,34 @@ if(docloud) then
   units='%'
   call compress3D(tmp,nx,ny,1,name,long_name,units, &
                                save2Dbin,dompi,rank,nsubdomains)
+end if
+
+if(doprecip) then
+  nfields1=nfields1+1
+  do j=1,ny
+    do i=1,nx
+      tmp(i,j,1)=rw_xy(i,j)*coef
+      rw_xy(i,j) = 0.
+    end do
+  end do
+ name='PLWP'
+ long_name='Precipitating Liquid Water Path'
+ units='mm'
+ call compress3D(tmp,nx,ny,1,name,long_name,units, &
+                              save2Dbin,dompi,rank,nsubdomains)
+
+  nfields1=nfields1+1
+  do j=1,ny
+    do i=1,nx
+      tmp(i,j,1)=piw_xy(i,j)*coef
+      piw_xy(i,j) = 0.
+    end do
+  end do
+ name='PIWP'
+ long_name='Precipitating Ice Water Path'
+ units='mm'
+ call compress3D(tmp,nx,ny,1,name,long_name,units, &
+                              save2Dbin,dompi,rank,nsubdomains)
 
 end if
 
@@ -360,18 +390,18 @@ end if
                                save2Dbin,dompi,rank,nsubdomains)
 
 
-   nfields1=nfields1+1
-   do j=1,ny
-     do i=1,nx
-       tmp(i,j,1)=u200_xy(i,j)*coef
-       u200_xy(i,j) = 0.
-     end do
-   end do
-  name='U200'
-  long_name='U at 200 mb'
-  units='m/s'
-  call compress3D(tmp,nx,ny,1,name,long_name,units, &
-                               save2Dbin,dompi,rank,nsubdomains)
+  !  nfields1=nfields1+1
+  !  do j=1,ny
+  !    do i=1,nx
+  !      tmp(i,j,1)=u200_xy(i,j)*coef
+  !      u200_xy(i,j) = 0.
+  !    end do
+  !  end do
+  ! name='U200'
+  ! long_name='U at 200 mb'
+  ! units='m/s'
+  ! call compress3D(tmp,nx,ny,1,name,long_name,units, &
+  !                              save2Dbin,dompi,rank,nsubdomains)
 
    nfields1=nfields1+1
    do j=1,ny
@@ -386,31 +416,31 @@ end if
   call compress3D(tmp,nx,ny,1,name,long_name,units, &
                                save2Dbin,dompi,rank,nsubdomains)
 
-   nfields1=nfields1+1
-   do j=1,ny
-     do i=1,nx
-       tmp(i,j,1)=v200_xy(i,j)*coef
-       v200_xy(i,j) = 0.
-     end do
-   end do
-  name='V200'
-  long_name='V at 200 mb'
-  units='m/s'
-  call compress3D(tmp,nx,ny,1,name,long_name,units, &
-                               save2Dbin,dompi,rank,nsubdomains)
+  !  nfields1=nfields1+1
+  !  do j=1,ny
+  !    do i=1,nx
+  !      tmp(i,j,1)=v200_xy(i,j)*coef
+  !      v200_xy(i,j) = 0.
+  !    end do
+  !  end do
+  ! name='V200'
+  ! long_name='V at 200 mb'
+  ! units='m/s'
+  ! call compress3D(tmp,nx,ny,1,name,long_name,units, &
+  !                              save2Dbin,dompi,rank,nsubdomains)
 
-   nfields1=nfields1+1
-   do j=1,ny
-     do i=1,nx
-       tmp(i,j,1)=w500_xy(i,j)*coef
-       w500_xy(i,j) = 0.
-     end do
-   end do
-  name='W500'
-  long_name='W at 500 mb'
-  units='m/s'
-  call compress3D(tmp,nx,ny,1,name,long_name,units, &
-                               save2Dbin,dompi,rank,nsubdomains)
+  !  nfields1=nfields1+1
+  !  do j=1,ny
+  !    do i=1,nx
+  !      tmp(i,j,1)=w500_xy(i,j)*coef
+  !      w500_xy(i,j) = 0.
+  !    end do
+  !  end do
+  ! name='W500'
+  ! long_name='W at 500 mb'
+  ! units='m/s'
+  ! call compress3D(tmp,nx,ny,1,name,long_name,units, &
+  !                              save2Dbin,dompi,rank,nsubdomains)
 
 if(dodynamicocean) then
    nfields1=nfields1+1

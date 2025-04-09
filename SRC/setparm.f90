@@ -27,9 +27,20 @@ NAMELIST /PARAMETERS/ dodamping, doupperbound, docloud, doprecip, &
 		donudging_uv, donudging_tq, &
                 donudging_t, donudging_q, tauls,tautqls,&
                 nudging_uv_z1, nudging_uv_z2, nudging_t_z1, nudging_t_z2, &
-                nudging_q_z1, nudging_q_z2, dofplane, &
+                nudging_q_z1, nudging_q_z2, &
+                ! --- Heng Xiao, 02/19/2024
+                ! Adding nudging_tq start and end times (in seconds since start)
+                nudging_tq_t1, nudging_tq_t2, &
+                ! --- Heng Xiao, 02/19/2024
+                dofplane, &
 		timelargescale, longitude0, latitude0, day0, nrad, &
 		CEM,LES,OCEAN,LAND,SFC_FLX_FXD,SFC_TAU_FXD, soil_wetness, &
+                ! --- Heng Xiao 09/18/2024
+                UNIFORM_SFC_FLX, &
+                ! --- Heng Xiao 09/18/2024
+                ! --- Heng Xiao 09/24/2024
+                READ_IN_GEOSTROPHIC_WIND, &
+                ! --- Heng Xiao 09/24/2024
                 doensemble, nensemble, dowallx, dowally, &
                 nsave2D, nsave2Dstart, nsave2Dend, qnsave3D, & 
                 docolumn, save2Dbin, save2Davg, save3Dbin, &
@@ -46,6 +57,8 @@ NAMELIST /PARAMETERS/ dodamping, doupperbound, docloud, doprecip, &
                 bubble_x0,bubble_y0,bubble_z0,bubble_radius_hor, &
                 bubble_radius_ver,bubble_dtemp,bubble_dq, dosmoke, dossthomo, &
                 rad3Dout, nxco2, dosimfilesout, notracegases, &
+                ! adding compute_reffc,compute_reffi to the namelist --- Heng Xiao 02/12/2025
+                compute_reffc, compute_reffi, &
 !mo                doradlat, doradlon
 !                doradlat, doradlon, &                   ! mo
 ! Add  SBM radar simulator (MO: mikhail@pnnl.gov)
@@ -54,11 +67,7 @@ NAMELIST /PARAMETERS/ dodamping, doupperbound, docloud, doprecip, &
 !                lidar_table_name, lidar_wavelen, fov_l, fov_t, use_ms,  &
 !                lidar_alt, use_solid_ice,                               &
 ! END Add  SBM radar simulator
-! Add  nudging variable with height for ISDAC intercomparison (MO: mikhail@pnnl.gov)
-                dotauz_tonly, dotauz_tq, tauz1, tauz2, tauz_tau,        &
-                tauzuv1, tauzuv2, tauz_uv, &
-! END Add  nudging variable with height for ISDAC intercomparison
-! add for VOCLAS
+! add for VOCALS
                 tprecip
 !--------------------------------
 ! Add for SBM radar simulator (MO: mikhail@pnnl.gov)
