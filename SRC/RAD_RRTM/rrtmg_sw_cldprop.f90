@@ -279,14 +279,21 @@
                                     (extliq1(index+1,ib) - extliq1(index,ib))
                       ssacoliq(ib) = ssaliq1(index,ib) + fint * &
                                     (ssaliq1(index+1,ib) - ssaliq1(index,ib))
-                      if (fint .lt. 0._rb .and. ssacoliq(ib) .gt. 1._rb) &
-                                     ssacoliq(ib) = ssaliq1(index,ib)
+                     !  if (fint .lt. 0._rb .and. ssacoliq(ib) .gt. 1._rb) &
+                     ! This is modified to avoid ssacoliq(ib) > 1.0 when used together
+                     ! with HUJISBM.
+                     ! --- Heng Xiao, 04/11/2025
+                      if (fint .lt. 0._rb .or. ssacoliq(ib) .gt. 1._rb) &
+                                     ssacoliq(ib) = ssaliq1(index+1,ib)
                       gliq(ib) = asyliq1(index,ib) + fint * &
                                 (asyliq1(index+1,ib) - asyliq1(index,ib))
                       forwliq(ib) = gliq(ib)*gliq(ib)
 ! Check to ensure all calculated quantities are within physical limits.
                       if (extcoliq(ib) .lt. 0.0_rb) stop 'LIQUID EXTINCTION LESS THAN 0.0'
-                      if (ssacoliq(ib) .gt. 1.0_rb) stop 'LIQUID SSA GRTR THAN 1.0'
+                      if (ssacoliq(ib) .gt. 1.0_rb) then
+                        print*, ' Debugging ssa: ', ib, radliq, index, fint, ssaliq1(index, ib), ssaliq1(index+1, ib)
+                        stop 'LIQUID SSA GRTR THAN 1.0'
+                      endif
                       if (ssacoliq(ib) .lt. 0.0_rb) stop 'LIQUID SSA LESS THAN 0.0'
                       if (gliq(ib) .gt. 1.0_rb) stop 'LIQUID ASYM GRTR THAN 1.0'
                       if (gliq(ib) .lt. 0.0_rb) stop 'LIQUID ASYM LESS THAN 0.0'

@@ -1345,7 +1345,12 @@ end subroutine micro_print
       END DO
 ! calculate effcs - Fandec11 for v6.9.4
 !        if (bottom > 0.) then
-        if (QC(I,j,k) > 1.e-6 .and. bottom > 0.) then
+        ! if (QC(I,j,k) > 1.e-6 .and. bottom > 0.) then
+        ! In the radiation code (RAD_RRTM), effective radius is used 
+        ! whenever the water content > 1.0e-20 g/m^3.
+        ! This is modified to be more consistent with the radiation code.
+        !  --- Heng Xiao, 04/11/2025
+        if ((QC(I,j,k)+QR(I,j,k)) > 0. .and. bottom > 0.) then
         reffc(I,j,k) = top/bottom
         endif
 ! transform from cm to um

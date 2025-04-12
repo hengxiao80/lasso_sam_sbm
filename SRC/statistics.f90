@@ -182,7 +182,8 @@ real, dimension(nzm) :: rhowcl, rhowmsecl, rhowtlcl, rhowqtcl,  &
            qsz(k)=qsz(k)+qss
 !mo           qcz(k)=qcz(k)+qcc
 !mo           qiz(k)=qiz(k)+qii
-           qcz(k)=qcz(k)+qcc+qrr  ! Add precip to profiles of liquid
+        !    qcz(k)=qcz(k)+qcc+qrr  ! Add precip to profiles of liquid
+           qcz(k)=qcz(k)+qcc
            qiz(k)=qiz(k)+qii+qss  ! and ice water content
 
 	   prof1(k)=prof1(k)+qcc+qii
