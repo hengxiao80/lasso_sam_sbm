@@ -11,13 +11,43 @@ module microphysics
 use grid, only: nx,ny,nzm,nz, masterproc,RUN3D, &  ! grid dimensions; nzm=nz-1 - # of levels for all scalars
               & dimx1_s,dimx2_s,dimy1_s,dimy2_s ! actual scalar-array dimensions
 
-use params, only: cp, ggr, rgas,rv,lsub 
+use params, only: cp, ggr, rgas,rv,lsub, pi
 ! v6/9/4
 use params, only: doprecip, docloud
 
 use module_hujisbm
 
 implicit none
+
+! For M2005-style reflectivity calculations
+! --- Heng Xiao, 04/14/2025
+!!..Various radar related variables, from GT
+!!..Lookup table dimensions
+INTEGER, PARAMETER, PRIVATE:: nbins = 100
+INTEGER, PARAMETER, PRIVATE:: nbr = nbins
+INTEGER, PARAMETER, PRIVATE:: nbs = nbins
+INTEGER, PARAMETER, PRIVATE:: nbg = nbins
+REAL(8), DIMENSION(nbins+1):: ddx
+REAL(8), DIMENSION(nbr):: Dr, dtr
+REAL(8), DIMENSION(nbs):: Dds, dts
+REAL(8), DIMENSION(nbg):: Ddg, dtg
+REAL(8), PARAMETER, PRIVATE:: lamda_radar = 0.10         ! in meters
+REAL(8), PRIVATE:: K_w, PI5, lamda4
+COMPLEX*16, PRIVATE:: m_w_0, m_i_0
+REAL(8), DIMENSION(nbins+1), PRIVATE:: simpson
+REAL(8), DIMENSION(3), PARAMETER, PRIVATE:: basis =      &
+                     (/1.d0/3.d0, 4.d0/3.d0, 1.d0/3.d0/)
+INTEGER, PARAMETER, PRIVATE:: slen = 20
+CHARACTER(len=slen), PRIVATE::                                    &
+        mixingrulestring_s, matrixstring_s, inclusionstring_s,    &
+        hoststring_s, hostmatrixstring_s, hostinclusionstring_s,  &
+        mixingrulestring_g, matrixstring_g, inclusionstring_g,    &
+        hoststring_g, hostmatrixstring_g, hostinclusionstring_g
+REAL, PARAMETER, PRIVATE:: D0r = 50.E-6
+REAL, PARAMETER, PRIVATE:: D0s = 100.E-6
+REAL, PARAMETER, PRIVATE:: D0g = 100.E-6
+CHARACTER*256:: mp_debug
+! For M2005-style reflectivity calculations
 
 ! Allocate the required memory for all the prognostic microphysics arrays:
 
@@ -188,6 +218,8 @@ real ssati(nx, ny, nzm) ! supersaturation over ice water [%]
 ! effective radius for instrument simulators
 real reffc(nx, ny, nzm)
 real reffi(nx, ny, nzm)
+! for M2005-like radar reflectivity calculation --- Heng Xiao, 04/14/2025
+real refl_10cm(nx, ny, nzm)
 
 ! added for SHEA output variable vfice_mw
 real vfice_mw(nx, ny, nzm) ! mass weighted ice fall velocity
@@ -266,7 +298,9 @@ end subroutine micro_print
 
       use vars, only: dudt,dvdt,dwdt,tabs,t,pres,rho,nrestart,qv,gamaz
       use grid, only: nc,dx,dy,dz,dt,nstep,icycle,z, &
-                     & dimx1_w,dimx2_w, dimy1_w, dimy2_w 
+                      dimx1_w,dimx2_w, dimy1_w, dimy2_w
+      ! for l_calc_refl --- Heng Xiao, 04/14/2025
+      use grid, only: nsave3D, nsave3dstart, nsave3dend
       use params
       IMPLICIT NONE
 !-----------------------------------------------------------------------
@@ -358,16 +392,22 @@ end subroutine micro_print
 ! v6.9.4
 ! for effcs calculation
        real top, bottom
+! for m2005-like radar reflectivity calculation --- Heng Xiao, 04/14/2025
+       logical l_calc_refl
 
 !MO flag for coagulation (docoag=.false.  for ISDAC intercomparison)
        logical docoag
        docoag = .false.
+
   if (dt*(nstep-1).ge.tprecip) then !MO 4/19/16: For VOCALS intercomparison
        docoag = .true.              ! coagulation is ON after 1 h.
   endif                             ! tprecip (in s) is set in params.f90
 
-       itimestep=nstep
-!
+      itimestep=nstep
+
+      ! For M2005-like radar reflectivity calculation --- Heng Xiao, 04/14/2025
+      refl_10cm(:,:,:) = -35.0
+      l_calc_refl = (mod(nstep,nsave3D).eq.0).and.(nstep.ge.nsave3Dstart).and.(nstep.le.nsave3Dend)
 
       difmax = 0
 !       print*,'itimestep = ',itimestep
@@ -1573,7 +1613,17 @@ end subroutine micro_print
 !      END DO
 
       if (docloud)  call micro_diagnose()   ! leave this line here
-     
+
+      if (l_calc_refl) then
+        DO j = jts,jte
+          DO i = its,ite
+            call calc_refl10cm(qv(i,j,:), qr(i,j,:), qs(i,j,:), qg(i,j,:)+qh(i,j,:), & ! in kg/kg or g/g
+                               tabs(i,j,:), pres(:), refl_10cm(i,j,:), &
+                               kts, kte, i, j, qnr(i,j,:), qns(i,j,:), qng(i,j,:)+qnh(i,j,:)) ! in #/cm^3
+          enddo
+        enddo
+      endif
+
       RETURN
   END SUBROUTINE micro_proc
 
@@ -1614,6 +1664,7 @@ end subroutine micro_print
        REAL TWIIN(ICEMAX)
 
        real  rccn1(nkr)
+       integer n
 !       REAL RO_SOLUTE      
 !       PARAMETER (RO_SOLUTE=2.16)
 
@@ -2074,6 +2125,48 @@ end subroutine micro_print
      qv_old= qv
   end if
 
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+! variables for radar reflecitivity calculations
+!..Create bins of rain (from min diameter up to 5 mm).
+  Ddx(1) = D0r*1.0d0
+  Ddx(nbr+1) = 0.005d0
+  do n = 2, nbr
+     Ddx(n) = DEXP(DFLOAT(n-1)/DFLOAT(nbr) &
+              *DLOG(Ddx(nbr+1)/Ddx(1)) +DLOG(Ddx(1)))
+  enddo
+  do n = 1, nbr
+     Dr(n) = DSQRT(Ddx(n)*Ddx(n+1))
+     dtr(n) = Ddx(n+1) - Ddx(n)
+  enddo
+
+!..Create bins of snow (from min diameter up to 2 cm).
+  Ddx(1) = D0s*1.0d0
+  Ddx(nbs+1) = 0.02d0
+  do n = 2, nbs
+     Ddx(n) = DEXP(DFLOAT(n-1)/DFLOAT(nbs) &
+              *DLOG(Ddx(nbs+1)/Ddx(1)) +DLOG(Ddx(1)))
+  enddo
+  do n = 1, nbs
+     Dds(n) = DSQRT(Ddx(n)*Ddx(n+1))
+     dts(n) = Ddx(n+1) - Ddx(n)
+  enddo
+
+!..Create bins of graupel (from min diameter up to 5 cm).
+  Ddx(1) = D0g*1.0d0
+  Ddx(nbg+1) = 0.05d0
+  do n = 2, nbg
+     Ddx(n) = DEXP(DFLOAT(n-1)/DFLOAT(nbg) &
+              *DLOG(Ddx(nbg+1)/Ddx(1)) +DLOG(Ddx(1)))
+  enddo
+  do n = 1, nbg
+     Ddg(n) = DSQRT(Ddx(n)*Ddx(n+1))
+     dtg(n) = Ddx(n+1) - Ddx(n)
+  enddo
+
+  do i = 1, 256
+     mp_debug(i:i) = char(0)
+  enddo
 
         return
       END SUBROUTINE micro_init
@@ -3100,6 +3193,995 @@ function Get_reffi() ! ice
   Get_reffi = reffi
 end function Get_reffi
 
+subroutine radar_init
+
+  IMPLICIT NONE
+  INTEGER:: n
+  PI5 = PI*PI*PI*PI*PI
+  lamda4 = lamda_radar*lamda_radar*lamda_radar*lamda_radar
+  m_w_0 = m_complex_water_ray (lamda_radar, 0.0d0)
+  m_i_0 = m_complex_ice_maetzler (lamda_radar, 0.0d0)
+  K_w = (ABS( (m_w_0*m_w_0 - 1.0) /(m_w_0*m_w_0 + 2.0) ))**2
+
+  do n = 1, nbins+1
+    simpson(n) = 0.0d0
+  enddo
+  do n = 1, nbins-1, 2
+    simpson(n) = simpson(n) + basis(1)
+    simpson(n+1) = simpson(n+1) + basis(2)
+    simpson(n+2) = simpson(n+2) + basis(3)
+  enddo
+
+  do n = 1, slen
+    mixingrulestring_s(n:n) = char(0)
+    matrixstring_s(n:n) = char(0)
+    inclusionstring_s(n:n) = char(0)
+    hoststring_s(n:n) = char(0)
+    hostmatrixstring_s(n:n) = char(0)
+    hostinclusionstring_s(n:n) = char(0)
+    mixingrulestring_g(n:n) = char(0)
+    matrixstring_g(n:n) = char(0)
+    inclusionstring_g(n:n) = char(0)
+    hoststring_g(n:n) = char(0)
+    hostmatrixstring_g(n:n) = char(0)
+    hostinclusionstring_g(n:n) = char(0)
+  enddo
+
+  mixingrulestring_s = 'maxwellgarnett'
+  hoststring_s = 'air'
+  matrixstring_s = 'water'
+  inclusionstring_s = 'spheroidal'
+  hostmatrixstring_s = 'icewater'
+  hostinclusionstring_s = 'spheroidal'
+
+  mixingrulestring_g = 'maxwellgarnett'
+  hoststring_g = 'air'
+  matrixstring_g = 'water'
+  inclusionstring_g = 'spheroidal'
+  hostmatrixstring_g = 'icewater'
+  hostinclusionstring_g = 'spheroidal'
+
+end subroutine radar_init
+
+!+---+-----------------------------------------------------------------+
+!..Compute radar reflectivity assuming 10 cm wavelength radar and using
+!.. Rayleigh approximation.  Only complication is melted snow/graupel
+!.. which we treat as water-coated ice spheres and use Uli Blahak's
+!.. library of routines.  The meltwater fraction is simply the amount
+!.. of frozen species remaining from what initially existed at the
+!.. melting level interface.
+!+---+-----------------------------------------------------------------+
+subroutine calc_refl10cm (qv1d, qr1d, qs1d, qg1d, t1d, p1d, dBZ, &
+                          kts, kte, ii, jj, nr1d, ns1d, ng1d)
+
+      IMPLICIT NONE
+
+!..Sub arguments
+      INTEGER, INTENT(IN):: kts, kte, ii, jj
+      ! qv1d, qr1d, qs1d, qg1d in kg/kg or g/g
+      ! nr1d, ns1d, ng1d in #/cm^3
+      ! t1d in K, p1d in mb or hPa
+      REAL, DIMENSION(kts:kte), INTENT(IN)::                            &
+                qv1d, qr1d, qs1d, qg1d, t1d, p1d, nr1d, ns1d, ng1d
+      REAL, DIMENSION(kts:kte), INTENT(INOUT):: dBZ
+
+!..Local variables
+      REAL, DIMENSION(kts:kte):: temp, pres, qv, rho
+      REAL, DIMENSION(kts:kte):: rr, rs, rg,rnr,rns,rng
+
+      REAL(8), DIMENSION(kts:kte):: ilamr, ilamg, N0_r, N0_g,ilams,n0_s
+
+      REAL, DIMENSION(kts:kte):: ze_rain, ze_snow, ze_graupel
+
+      REAL(8):: lamg
+      REAL(8):: fmelt_s, fmelt_g
+
+      INTEGER:: i, k, k_0
+      LOGICAL:: melti
+      LOGICAL, DIMENSION(kts:kte):: L_qr, L_qs, L_qg
+
+!..Single melting snow/graupel particle 70% meltwater on external sfc
+      REAL(8), PARAMETER:: melt_outside_s = 0.7d0
+      REAL(8), PARAMETER:: melt_outside_g = 0.7d0
+
+      REAL(8):: cback, x, eta, f_d
+
+! hm added parameter
+      REAL R1,t_0,dumlams,dumlamr,dumlamg,dumn0s,dumn0r,dumn0g,ocms,obms,ocmg,obmg
+
+      real, parameter :: R = rgas
+      integer n
+
+! parameters needed for this M2005 subroutine to work in HUJISBM
+      real, parameter ::  &
+        RHOW = 997., & ! [kg/m^3] for water
+        RHOSN = 100., & ! [kg/m^3] for snow
+        RHOG = 900. ! [kg/m^3] for graupel
+      real, parameter:: &
+        CS = RHOSN*PI/6., &
+        DS = 3., &
+        CG = RHOG*PI/6., &
+        DG = 3.
+      ! SIZE LIMITS FOR LAMBDA
+      real, parameter:: &
+        LAMMAXR = 1./20.E-6, &
+        LAMMINR = 1./500.E-6, &
+        LAMMAXS = 1./10.E-6, &
+        LAMMINS = 1./2000.E-6, &
+        LAMMAXG = 1./20.E-6, &
+        LAMMING = 1./2000.E-6
+      real, parameter :: &
+        ! CONS1=GAMMA(1.+DS)*CS, &
+        ! CONS2=GAMMA(1.+DG)*CG
+        ! no need to use GAMMA function as gamma(1.+3.)=6.
+        CONS1 = 6.*CS, &
+        CONS2 = 6.*CG
+!+---+
+      R1 = 1.E-12
+      t_0 = 273.15
+
+      do k = kts, kte
+        dBZ(k) = -35.0
+      enddo
+
+!+---+-----------------------------------------------------------------+
+!..Put column of data into local arrays.
+!+---+-----------------------------------------------------------------+
+      do k = kts, kte
+         temp(k) = t1d(k) ! [K]
+         qv(k) = MAX(1.E-10, qv1d(k)) ! [kg/kg]
+         pres(k) = p1d(k) * 100.0 ! [hPa to Pa]
+         rho(k) = 0.622*pres(k)/(R*temp(k)*(qv(k)+0.622)) ! [kg/m^3]
+         if (qr1d(k) .gt. R1) then
+            rr(k) = qr1d(k)*rho(k) ! in [kg/m^3]
+            L_qr(k) = .true.
+         else
+            rr(k) = R1
+            L_qr(k) = .false.
+         endif
+         if (qs1d(k) .gt. R1) then
+            rs(k) = qs1d(k)*rho(k)
+            L_qs(k) = .true.
+         else
+            rs(k) = R1
+            L_qs(k) = .false.
+         endif
+         if (qg1d(k) .gt. R1) then
+            rg(k) = qg1d(k)*rho(k)
+            L_qg(k) = .true.
+         else
+            rg(k) = R1
+            L_qg(k) = .false.
+         endif
+
+! hm add number concentration
+         if (nr1d(k) .gt. R1) then
+            rnr(k) = nr1d(k)*1.0e6 ! [# cm^-3 to # m^-3]
+         else
+            rnr(k) = R1
+         endif
+         if (ns1d(k) .gt. R1) then
+            rns(k) = ns1d(k)*1.0e6
+         else
+            rns(k) = R1
+         endif
+         if (ng1d(k) .gt. R1) then
+            rng(k) = ng1d(k)*1.0e6
+         else
+            rng(k) = R1
+         endif
+
+      enddo
+
+!+---+-----------------------------------------------------------------+
+!..Calculate y-intercept, slope, and useful moments for snow.
+!+---+-----------------------------------------------------------------+
+      do k = kts, kte
+
+! compute moments for snow
+
+! calculate slope and intercept parameter
+      dumLAMS = (CONS1*rns(K)/rs(K))**(1./DS)
+      dumN0S = rns(K)*dumLAMS/rho(k)
+
+! CHECK FOR SLOPE to make sure min/max bounds are not exceeded
+
+! ADJUST VARS
+
+      IF (dumLAMS.LT.LAMMINS) THEN
+      dumLAMS = LAMMINS
+      dumN0S = dumLAMS**4*rs(K)/CONS1
+      ELSE IF (dumLAMS.GT.LAMMAXS) THEN
+      dumLAMS = LAMMAXS
+      dumN0S = dumLAMS**4*rs(k)/CONS1
+      end if
+
+      ilams(k)=1./dumlams
+      n0_s(k)=dumn0s
+
+      enddo
+
+!+---+-----------------------------------------------------------------+
+!..Calculate y-intercept, slope values for graupel.
+!+---+-----------------------------------------------------------------+
+
+      do k = kte, kts, -1
+
+
+! calculate slope and intercept parameter
+
+      dumLAMg = (CONS2*rng(K)/rg(K))**(1./Dg)
+      dumN0g = rng(K)*dumLAMg/rho(k)
+
+! CHECK FOR SLOPE to make sure min/max bounds are not exceeded
+
+! ADJUST VARS
+
+      IF (dumLAMg.LT.LAMMINg) THEN
+      dumLAMg = LAMMINg
+      dumN0g = dumLAMg**4*rg(K)/CONS2
+      ELSE IF (dumLAMg.GT.LAMMAXg) THEN
+      dumLAMg = LAMMAXg
+      dumN0g = dumLAMg**4*rg(k)/CONS2
+      end if
+
+      ilamg(k)=1./dumlamg
+      n0_g(k)=dumn0g
+
+      enddo
+
+!+---+-----------------------------------------------------------------+
+!..Calculate y-intercept & slope values for rain.
+!+---+-----------------------------------------------------------------+
+
+      do k = kte, kts, -1
+
+! calculate slope and intercept parameter
+
+      dumLAMr = (PI*RHOW*rnr(K)/rr(K))**(1./3.)
+      dumN0r = rnr(K)*dumLAMr/rho(k)
+
+! CHECK FOR SLOPE to make sure min/max bounds are not exceeded
+
+! ADJUST VARS
+
+      IF (dumLAMr.LT.LAMMINr) THEN
+      dumLAMr = LAMMINr
+      dumN0r = dumLAMr**4*rr(K)/(PI*RHOW)
+      ELSE IF (dumLAMr.GT.LAMMAXr) THEN
+      dumLAMr = LAMMAXr
+      dumN0r = dumLAMr**4*rr(k)/(PI*RHOW)
+      end if
+
+      ilamr(k)=1./dumlamr
+      n0_r(k)=dumn0r
+
+      enddo
+
+      melti = .false.
+      k_0 = kts
+      do k = kte-1, kts, -1
+         if ( (temp(k).gt. T_0) .and. (rr(k).gt. 0.001e-3) &
+                   .and. ((rs(k+1)+rg(k+1)).gt. 0.01e-3) ) then
+            k_0 = MAX(k+1, k_0)
+            melti=.true.
+            goto 195
+         endif
+      enddo
+ 195  continue
+
+!+---+-----------------------------------------------------------------+
+!..Assume Rayleigh approximation at 10 cm wavelength. Rain (all temps)
+!.. and non-water-coated snow and graupel when below freezing are
+!.. simple. Integrations of m(D)*m(D)*N(D)*dD.
+!+---+-----------------------------------------------------------------+
+
+      do k = kts, kte
+         ze_rain(k) = 1.e-22
+         ze_snow(k) = 1.e-22
+         ze_graupel(k) = 1.e-22
+         if (L_qr(k)) ze_rain(k) = N0_r(k)*720.*ilamr(k)**7
+
+         if (L_qs(k)) ze_snow(k) = (0.176/0.93) * (6.0/PI)*(6.0/PI)     &
+                                 * (pi*rhosn/6./900.)*(pi*rhosn/6./900.) &
+                                    * N0_s(k)*720.*ilams(k)**7
+         if (L_qg(k)) ze_graupel(k) = (0.176/0.93) * (6.0/PI)*(6.0/PI)  &
+                                    * (pi*rhog/6./900.)* (pi*rhog/6./900.)        &
+                                    * N0_g(k)*720.*ilamg(k)**7
+      enddo
+
+!+---+-----------------------------------------------------------------+
+!..Special case of melting ice (snow/graupel) particles.  Assume the
+!.. ice is surrounded by the liquid water.  Fraction of meltwater is
+!.. extremely simple based on amount found above the melting level.
+!.. Uses code from Uli Blahak (rayleigh_soak_wetgraupel and supporting
+!.. routines).
+!+---+-----------------------------------------------------------------+
+
+      if (melti .and. k_0.ge.2) then
+       do k = k_0-1, 1, -1
+
+!..Reflectivity contributed by melting snow
+          fmelt_s = DMIN1(1.0d0-rs(k)/rs(k_0), 1.0d0)
+          if (fmelt_s.gt.0.01d0 .and. fmelt_s.lt.0.99d0 .and.           &
+                         rs(k).gt.R1) then
+           eta = 0.d0
+           obms = 1./ds
+           ocms = (1./(pi*rhosn/6.))**obms
+           do n = 1, nbs
+              x = pi*rhosn/6. * Dds(n)**3
+              call rayleigh_soak_wetgraupel (x, DBLE(ocms), DBLE(obms), &
+                    fmelt_s, melt_outside_s, m_w_0, m_i_0, lamda_radar, &
+                    CBACK, mixingrulestring_s, matrixstring_s,          &
+                    inclusionstring_s, hoststring_s,                    &
+                    hostmatrixstring_s, hostinclusionstring_s)
+              f_d = N0_s(k)* DEXP(-Dds(n)/ilams(k))
+              eta = eta + f_d * CBACK * simpson(n) * dts(n)
+
+           enddo
+           ze_snow(k) = SNGL(lamda4 / (pi5 * K_w) * eta)
+          endif
+
+
+!..Reflectivity contributed by melting graupel
+
+          fmelt_g = DMIN1(1.0d0-rg(k)/rg(k_0), 1.0d0)
+          if (fmelt_g.gt.0.01d0 .and. fmelt_g.lt.0.99d0 .and.           &
+                         rg(k).gt.R1) then
+           eta = 0.d0
+           lamg = 1./ilamg(k)
+           obmg = 1./dg
+           ocmg = (1./(pi*rhog/6.))**obmg
+           do n = 1, nbg
+              x = pi*rhog/6. * Ddg(n)**3
+              call rayleigh_soak_wetgraupel (x, DBLE(ocmg), DBLE(obmg), &
+                    fmelt_g, melt_outside_g, m_w_0, m_i_0, lamda_radar, &
+                    CBACK, mixingrulestring_g, matrixstring_g,          &
+                    inclusionstring_g, hoststring_g,                    &
+                    hostmatrixstring_g, hostinclusionstring_g)
+              f_d = N0_g(k)* DEXP(-lamg*Ddg(n))
+              eta = eta + f_d * CBACK * simpson(n) * dtg(n)
+           enddo
+           ze_graupel(k) = SNGL(lamda4 / (pi5 * K_w) * eta)
+          endif
+
+       enddo
+      endif
+
+      do k = kte, kts, -1
+         dBZ(k) = 10.*log10((ze_rain(k)+ze_snow(k)+ze_graupel(k))*1.d18)
+      enddo
+
+      return
+
+end subroutine calc_refl10cm
+
+COMPLEX*16 FUNCTION m_complex_water_ray(lambda,T)
+
+!      Complex refractive Index of Water as function of Temperature T
+!      [deg C] and radar wavelength lambda [m]; valid for
+!      lambda in [0.001,1.0] m; T in [-10.0,30.0] deg C
+!      after Ray (1972)
+
+      IMPLICIT NONE
+      REAL(8), INTENT(IN):: T,lambda
+      REAL(8):: epsinf,epss,epsr,epsi
+      REAL(8):: alpha,lambdas,sigma,nenner
+      COMPLEX*16, PARAMETER:: i = (0d0,1d0)
+
+      epsinf  = 5.27137d0 + 0.02164740d0 * T - 0.00131198d0 * T*T
+      epss    = 78.54d+0 * (1.0 - 4.579d-3 * (T - 25.0)                 &
+              + 1.190d-5 * (T - 25.0)*(T - 25.0)                        &
+              - 2.800d-8 * (T - 25.0)*(T - 25.0)*(T - 25.0))
+      alpha   = -16.8129d0/(T+273.16) + 0.0609265d0
+      lambdas = 0.00033836d0 * exp(2513.98d0/(T+273.16)) * 1e-2
+
+      nenner = 1.d0+2.d0*(lambdas/lambda)**(1d0-alpha)*sin(alpha*PI*0.5) &
+             + (lambdas/lambda)**(2d0-2d0*alpha)
+      epsr = epsinf + ((epss-epsinf) * ((lambdas/lambda)**(1d0-alpha)   &
+           * sin(alpha*PI*0.5)+1d0)) / nenner
+      epsi = ((epss-epsinf) * ((lambdas/lambda)**(1d0-alpha)            &
+           * cos(alpha*PI*0.5)+0d0)) / nenner                           &
+           + lambda*1.25664/1.88496
+      
+      m_complex_water_ray = SQRT(CMPLX(epsr,-epsi))
+      
+END FUNCTION m_complex_water_ray
+
+COMPLEX*16 FUNCTION m_complex_ice_maetzler(lambda,T)
+      
+!      complex refractive index of ice as function of Temperature T
+!      [deg C] and radar wavelength lambda [m]; valid for
+!      lambda in [0.0001,30] m; T in [-250.0,0.0] C
+!      Original comment from the Matlab-routine of Prof. Maetzler:
+!      Function for calculating the relative permittivity of pure ice in
+!      the microwave region, according to C. Maetzler, "Microwave
+!      properties of ice and snow", in B. Schmitt et al. (eds.) Solar
+!      System Ices, Astrophys. and Space Sci. Library, Vol. 227, Kluwer
+!      Academic Publishers, Dordrecht, pp. 241-257 (1998). Input:
+!      TK = temperature (K), range 20 to 273.15
+!      f = frequency in GHz, range 0.01 to 3000
+         
+      IMPLICIT NONE
+      REAL(8), INTENT(IN):: T,lambda
+      REAL(8):: f,c,TK,B1,B2,b,deltabeta,betam,beta,theta,alfa
+
+      c = 2.99d8
+      TK = T + 273.16
+      f = c / lambda * 1d-9
+
+      B1 = 0.0207
+      B2 = 1.16d-11
+      b = 335.0d0
+      deltabeta = EXP(-10.02 + 0.0364*(TK-273.16))
+      betam = (B1/TK) * ( EXP(b/TK) / ((EXP(b/TK)-1)**2) ) + B2*f*f
+      beta = betam + deltabeta
+      theta = 300. / TK - 1.
+      alfa = (0.00504d0 + 0.0062d0*theta) * EXP(-22.1d0*theta)
+      m_complex_ice_maetzler = 3.1884 + 9.1e-4*(TK-273.16)
+      m_complex_ice_maetzler = m_complex_ice_maetzler                   &
+                             + CMPLX(0.0d0, (alfa/f + beta*f)) 
+      m_complex_ice_maetzler = SQRT(CONJG(m_complex_ice_maetzler))
+      
+END FUNCTION m_complex_ice_maetzler
+
+subroutine rayleigh_soak_wetgraupel(x_g, a_geo, b_geo, fmelt, &
+                                    meltratio_outside, m_w, m_i, lambda, C_back, &
+                                    mixingrule,matrix,inclusion, &
+                                    host,hostmatrix,hostinclusion)
+
+      IMPLICIT NONE
+
+      REAL(8), INTENT(in):: x_g, a_geo, b_geo, fmelt, lambda,  &
+                                     meltratio_outside
+      REAL(8), INTENT(out):: C_back
+      COMPLEX*16, INTENT(in):: m_w, m_i
+      CHARACTER(len=*), INTENT(in):: mixingrule, matrix, inclusion,     &
+                                     host, hostmatrix, hostinclusion
+
+      COMPLEX*16:: m_core, m_air
+      REAL(8):: D_large, D_g, rhog, x_w, xw_a, fm, fmgrenz,    &
+                         volg, vg, volair, volice, volwater,            &
+                         meltratio_outside_grenz, mra
+      INTEGER:: error
+      real :: rho_i, rho_w
+
+      rho_i = 900.
+      rho_w = 1000.
+
+!     refractive index of air:
+      m_air = (1.0d0,0.0d0)
+
+!     Limiting the degree of melting --- for safety: 
+      fm = DMAX1(DMIN1(fmelt, 1.0d0), 0.0d0)
+!     Limiting the ratio of (melting on outside)/(melting on inside):
+      mra = DMAX1(DMIN1(meltratio_outside, 1.0d0), 0.0d0)
+
+!    ! The relative portion of meltwater melting at outside should increase
+!    ! from the given input value (between 0 and 1)
+!    ! to 1 as the degree of melting approaches 1,
+!    ! so that the melting particle "converges" to a water drop.
+!    ! Simplest assumption is linear:
+      mra = mra + (1.0d0-mra)*fm
+
+      x_w = x_g * fm
+
+      D_g = a_geo * x_g**b_geo
+
+      if (D_g .ge. 1d-12) then
+
+       vg = PI/6. * D_g**3
+       rhog = DMAX1(DMIN1(x_g / vg, DBLE(rho_i)), 10.0d0)
+       vg = x_g / rhog
+      
+       meltratio_outside_grenz = 1.0d0 - rhog / rho_w
+
+       if (mra .le. meltratio_outside_grenz) then
+        !..In this case, it cannot happen that, during melting, all the
+        !.. air inclusions within the ice particle get filled with
+        !.. meltwater. This only happens at the end of all melting.
+        volg = vg * (1.0d0 - mra * fm)
+ 
+       else
+        !..In this case, at some melting degree fm, all the air
+        !.. inclusions get filled with meltwater.
+        fmgrenz=(rho_i-rhog)/(mra*rho_i-rhog+rho_i*rhog/rho_w)
+
+        if (fm .le. fmgrenz) then
+         !.. not all air pockets are filled:
+         volg = (1.0 - mra * fm) * vg
+        else
+         !..all air pockets are filled with meltwater, now the
+         !.. entire ice sceleton melts homogeneously:
+         volg = (x_g - x_w) / rho_i + x_w / rho_w
+        endif
+
+       endif
+
+       D_large  = (6.0 / PI * volg) ** (1./3.)
+       volice = (x_g - x_w) / (volg * rho_i)
+       volwater = x_w / (rho_w * volg)
+       volair = 1.0 - volice - volwater
+      
+       !..complex index of refraction for the ice-air-water mixture
+       !.. of the particle:
+       m_core = get_m_mix_nested (m_air, m_i, m_w, volair, volice,      &
+                         volwater, mixingrule, host, matrix, inclusion, &
+                         hostmatrix, hostinclusion, error)
+       if (error .ne. 0) then
+        C_back = 0.0d0
+        return
+       endif
+
+       !..Rayleigh-backscattering coefficient of melting particle: 
+       C_back = (ABS((m_core**2-1.0d0)/(m_core**2+2.0d0)))**2           &
+                * PI5 * D_large**6 / lamda4
+
+      else
+       C_back = 0.0d0
+      endif
+
+end subroutine rayleigh_soak_wetgraupel
+
+complex*16 function get_m_mix_nested (m_a, m_i, m_w, volair, &
+                                      volice, volwater, mixingrule, host, matrix, &
+                                      inclusion, hostmatrix, hostinclusion, cumulerror)
+
+      IMPLICIT NONE
+
+      REAL(8), INTENT(in):: volice, volair, volwater
+      COMPLEX*16, INTENT(in):: m_a, m_i, m_w
+      CHARACTER(len=*), INTENT(in):: mixingrule, host, matrix,          &
+                     inclusion, hostmatrix, hostinclusion
+      INTEGER, INTENT(out):: cumulerror
+
+      REAL(8):: vol1, vol2
+      COMPLEX*16:: mtmp
+      INTEGER:: error
+
+      !..Folded: ( (m1 + m2) + m3), where m1,m2,m3 could each be
+      !.. air, ice, or water
+
+      cumulerror = 0
+      get_m_mix_nested = CMPLX(1.0d0,0.0d0)
+
+      if (host .eq. 'air') then
+
+       if (matrix .eq. 'air') then
+        write(mp_debug,*) 'GET_M_MIX_NESTED: bad matrix: ', matrix
+        !bloss CALL wrf_debug(150, mp_debug)
+        cumulerror = cumulerror + 1
+       else
+        vol1 = volice / MAX(volice+volwater,1d-10)
+        vol2 = 1.0d0 - vol1
+        mtmp = get_m_mix (m_a, m_i, m_w, 0.0d0, vol1, vol2,             &
+                         mixingrule, matrix, inclusion, error)
+        cumulerror = cumulerror + error
+          
+        if (hostmatrix .eq. 'air') then
+         get_m_mix_nested = get_m_mix (m_a, mtmp, 2.0*m_a,              &
+                         volair, (1.0d0-volair), 0.0d0, mixingrule,     &
+                         hostmatrix, hostinclusion, error)
+         cumulerror = cumulerror + error
+        elseif (hostmatrix .eq. 'icewater') then
+         get_m_mix_nested = get_m_mix (m_a, mtmp, 2.0*m_a,              &
+                         volair, (1.0d0-volair), 0.0d0, mixingrule,     &
+                         'ice', hostinclusion, error)
+         cumulerror = cumulerror + error
+        else
+         write(mp_debug,*) 'GET_M_MIX_NESTED: bad hostmatrix: ',        &
+                           hostmatrix
+         !bloss CALL wrf_debug(150, mp_debug)
+         cumulerror = cumulerror + 1
+        endif
+       endif
+
+      elseif (host .eq. 'ice') then
+
+       if (matrix .eq. 'ice') then
+        write(mp_debug,*) 'GET_M_MIX_NESTED: bad matrix: ', matrix
+        !bloss CALL wrf_debug(150, mp_debug)
+        cumulerror = cumulerror + 1
+       else
+        vol1 = volair / MAX(volair+volwater,1d-10)
+        vol2 = 1.0d0 - vol1
+        mtmp = get_m_mix (m_a, m_i, m_w, vol1, 0.0d0, vol2,             &
+                         mixingrule, matrix, inclusion, error)
+        cumulerror = cumulerror + error
+
+        if (hostmatrix .eq. 'ice') then
+         get_m_mix_nested = get_m_mix (mtmp, m_i, 2.0*m_a,              &
+                         (1.0d0-volice), volice, 0.0d0, mixingrule,     &
+                         hostmatrix, hostinclusion, error)
+         cumulerror = cumulerror + error
+        elseif (hostmatrix .eq. 'airwater') then
+         get_m_mix_nested = get_m_mix (mtmp, m_i, 2.0*m_a,              &
+                         (1.0d0-volice), volice, 0.0d0, mixingrule,     &
+                         'air', hostinclusion, error)
+         cumulerror = cumulerror + error          
+        else
+         write(mp_debug,*) 'GET_M_MIX_NESTED: bad hostmatrix: ',        &
+                           hostmatrix
+         !bloss CALL wrf_debug(150, mp_debug)
+         cumulerror = cumulerror + 1
+        endif
+       endif
+
+      elseif (host .eq. 'water') then
+
+       if (matrix .eq. 'water') then
+        write(mp_debug,*) 'GET_M_MIX_NESTED: bad matrix: ', matrix
+        !bloss CALL wrf_debug(150, mp_debug)
+        cumulerror = cumulerror + 1
+       else
+        vol1 = volair / MAX(volice+volair,1d-10)
+        vol2 = 1.0d0 - vol1
+        mtmp = get_m_mix (m_a, m_i, m_w, vol1, vol2, 0.0d0,             &
+                         mixingrule, matrix, inclusion, error)
+        cumulerror = cumulerror + error
+
+        if (hostmatrix .eq. 'water') then
+         get_m_mix_nested = get_m_mix (2.0d0*m_a, mtmp, m_w,            &
+                         0.0d0, (1.0d0-volwater), volwater, mixingrule, &
+                         hostmatrix, hostinclusion, error)
+         cumulerror = cumulerror + error
+        elseif (hostmatrix .eq. 'airice') then
+         get_m_mix_nested = get_m_mix (2.0d0*m_a, mtmp, m_w,            &
+                         0.0d0, (1.0d0-volwater), volwater, mixingrule, &
+                         'ice', hostinclusion, error)
+         cumulerror = cumulerror + error          
+        else
+         write(mp_debug,*) 'GET_M_MIX_NESTED: bad hostmatrix: ',         &
+                           hostmatrix
+         !bloss CALL wrf_debug(150, mp_debug)
+         cumulerror = cumulerror + 1
+        endif
+       endif
+
+      elseif (host .eq. 'none') then
+
+       get_m_mix_nested = get_m_mix (m_a, m_i, m_w,                     &
+                       volair, volice, volwater, mixingrule,            &
+                       matrix, inclusion, error)
+       cumulerror = cumulerror + error
+        
+      else
+       write(mp_debug,*) 'GET_M_MIX_NESTED: unknown matrix: ', host
+       !bloss CALL wrf_debug(150, mp_debug)
+       cumulerror = cumulerror + 1
+      endif
+
+      IF (cumulerror .ne. 0) THEN
+       write(mp_debug,*) 'GET_M_MIX_NESTED: error encountered'
+       !bloss CALL wrf_debug(150, mp_debug)
+       get_m_mix_nested = CMPLX(1.0d0,0.0d0)    
+      endif
+
+end function get_m_mix_nested
+
+COMPLEX*16 FUNCTION get_m_mix (m_a, m_i, m_w, volair, volice, &
+                               volwater, mixingrule, matrix, inclusion, error)
+
+      IMPLICIT NONE
+
+      REAL(8), INTENT(in):: volice, volair, volwater
+      COMPLEX*16, INTENT(in):: m_a, m_i, m_w
+      CHARACTER(len=*), INTENT(in):: mixingrule, matrix, inclusion
+      INTEGER, INTENT(out):: error
+
+      error = 0
+      get_m_mix = CMPLX(1.0d0,0.0d0)
+
+      if (mixingrule .eq. 'maxwellgarnett') then
+       if (matrix .eq. 'ice') then
+        get_m_mix = m_complex_maxwellgarnett(volice, volair, volwater,  &
+                           m_i, m_a, m_w, inclusion, error)
+       elseif (matrix .eq. 'water') then
+        get_m_mix = m_complex_maxwellgarnett(volwater, volair, volice,  &
+                           m_w, m_a, m_i, inclusion, error)
+       elseif (matrix .eq. 'air') then
+        get_m_mix = m_complex_maxwellgarnett(volair, volwater, volice,  &
+                           m_a, m_w, m_i, inclusion, error)
+       else
+        write(mp_debug,*) 'GET_M_MIX: unknown matrix: ', matrix
+        !bloss CALL wrf_debug(150, mp_debug)
+        error = 1
+       endif
+
+      else
+       write(mp_debug,*) 'GET_M_MIX: unknown mixingrule: ', mixingrule
+       !bloss CALL wrf_debug(150, mp_debug)
+       error = 2
+      endif
+
+      if (error .ne. 0) then
+       write(mp_debug,*) 'GET_M_MIX: error encountered'
+       !bloss CALL wrf_debug(150, mp_debug)
+      endif
+
+END FUNCTION get_m_mix
+
+COMPLEX*16 FUNCTION m_complex_maxwellgarnett(vol1, vol2, vol3, &
+                                             m1, m2, m3, inclusion, error)
+
+      IMPLICIT NONE
+
+      COMPLEX*16 :: m1, m2, m3
+      REAL(8) :: vol1, vol2, vol3
+      CHARACTER(len=*) :: inclusion
+
+      COMPLEX*16 :: beta2, beta3, m1t, m2t, m3t
+      INTEGER, INTENT(out) :: error
+
+      error = 0
+
+      if (DABS(vol1+vol2+vol3-1.0d0) .gt. 1d-6) then
+       write(mp_debug,*) 'M_COMPLEX_MAXWELLGARNETT: sum of the ',       &
+              'partial volume fractions is not 1...ERROR'
+       !bloss CALL wrf_debug(150, mp_debug)
+       m_complex_maxwellgarnett=CMPLX(-999.99d0,-999.99d0)
+       error = 1
+       return
+      endif
+
+      m1t = m1**2
+      m2t = m2**2
+      m3t = m3**2
+
+      if (inclusion .eq. 'spherical') then
+       beta2 = 3.0d0*m1t/(m2t+2.0d0*m1t)
+       beta3 = 3.0d0*m1t/(m3t+2.0d0*m1t)
+      elseif (inclusion .eq. 'spheroidal') then
+       beta2 = 2.0d0*m1t/(m2t-m1t) * (m2t/(m2t-m1t)*LOG(m2t/m1t)-1.0d0)
+       beta3 = 2.0d0*m1t/(m3t-m1t) * (m3t/(m3t-m1t)*LOG(m3t/m1t)-1.0d0)
+      else
+       write(mp_debug,*) 'M_COMPLEX_MAXWELLGARNETT: ',                  &
+                         'unknown inclusion: ', inclusion
+       !bloss CALL wrf_debug(150, mp_debug)
+       m_complex_maxwellgarnett=DCMPLX(-999.99d0,-999.99d0)
+       error = 1
+       return
+      endif
+
+      m_complex_maxwellgarnett = &
+       SQRT(((1.0d0-vol2-vol3)*m1t + vol2*beta2*m2t + vol3*beta3*m3t) / &
+       (1.0d0-vol2-vol3+vol2*beta2+vol3*beta3))
+
+END FUNCTION m_complex_maxwellgarnett
+
+! REAL FUNCTION GAMMA(X)
+! !----------------------------------------------------------------------
+! !
+! ! THIS ROUTINE CALCULATES THE GAMMA FUNCTION FOR A REAL ARGUMENT X.
+! !   COMPUTATION IS BASED ON AN ALGORITHM OUTLINED IN REFERENCE 1.
+! !   THE PROGRAM USES RATIONAL FUNCTIONS THAT APPROXIMATE THE GAMMA
+! !   FUNCTION TO AT LEAST 20 SIGNIFICANT DECIMAL DIGITS.  COEFFICIENTS
+! !   FOR THE APPROXIMATION OVER THE INTERVAL (1,2) ARE UNPUBLISHED.
+! !   THOSE FOR THE APPROXIMATION FOR X .GE. 12 ARE FROM REFERENCE 2.
+! !   THE ACCURACY ACHIEVED DEPENDS ON THE ARITHMETIC SYSTEM, THE
+! !   COMPILER, THE INTRINSIC FUNCTIONS, AND PROPER SELECTION OF THE
+! !   MACHINE-DEPENDENT CONSTANTS.
+! !
+! !
+! !*******************************************************************
+! !*******************************************************************
+! !
+! ! EXPLANATION OF MACHINE-DEPENDENT CONSTANTS
+! !
+! ! BETA   - RADIX FOR THE FLOATING-POINT REPRESENTATION
+! ! MAXEXP - THE SMALLEST POSITIVE POWER OF BETA THAT OVERFLOWS
+! ! XBIG   - THE LARGEST ARGUMENT FOR WHICH GAMMA(X) IS REPRESENTABLE
+! !          IN THE MACHINE, I.E., THE SOLUTION TO THE EQUATION
+! !                  GAMMA(XBIG) = BETA**MAXEXP
+! ! XINF   - THE LARGEST MACHINE REPRESENTABLE FLOATING-POINT NUMBER;
+! !          APPROXIMATELY BETA**MAXEXP
+! ! EPS    - THE SMALLEST POSITIVE FLOATING-POINT NUMBER SUCH THAT
+! !          1.0+EPS .GT. 1.0
+! ! XMININ - THE SMALLEST POSITIVE FLOATING-POINT NUMBER SUCH THAT
+! !          1/XMININ IS MACHINE REPRESENTABLE
+! !
+! !     APPROXIMATE VALUES FOR SOME IMPORTANT MACHINES ARE:
+! !
+! !                            BETA       MAXEXP        XBIG
+! !
+! ! CRAY-1         (S.P.)        2         8191        966.961
+! ! CYBER 180/855
+! !   UNDER NOS    (S.P.)        2         1070        177.803
+! ! IEEE (IBM/XT,
+! !   SUN, ETC.)   (S.P.)        2          128        35.040
+! ! IEEE (IBM/XT,
+! !   SUN, ETC.)   (D.P.)        2         1024        171.624
+! ! IBM 3033       (D.P.)       16           63        57.574
+! ! VAX D-FORMAT   (D.P.)        2          127        34.844
+! ! VAX G-FORMAT   (D.P.)        2         1023        171.489
+! !
+! !                            XINF         EPS        XMININ
+! !
+! ! CRAY-1         (S.P.)   5.45E+2465   7.11E-15    1.84E-2466
+! ! CYBER 180/855
+! !   UNDER NOS    (S.P.)   1.26E+322    3.55E-15    3.14E-294
+! ! IEEE (IBM/XT,
+! !   SUN, ETC.)   (S.P.)   3.40E+38     1.19E-7     1.18E-38
+! ! IEEE (IBM/XT,
+! !   SUN, ETC.)   (D.P.)   1.79D+308    2.22D-16    2.23D-308
+! ! IBM 3033       (D.P.)   7.23D+75     2.22D-16    1.39D-76
+! ! VAX D-FORMAT   (D.P.)   1.70D+38     1.39D-17    5.88D-39
+! ! VAX G-FORMAT   (D.P.)   8.98D+307    1.11D-16    1.12D-308
+! !
+! !*******************************************************************
+! !*******************************************************************
+! !
+! ! ERROR RETURNS
+! !
+! !  THE PROGRAM RETURNS THE VALUE XINF FOR SINGULARITIES OR
+! !     WHEN OVERFLOW WOULD OCCUR.  THE COMPUTATION IS BELIEVED
+! !     TO BE FREE OF UNDERFLOW AND OVERFLOW.
+! !
+! !
+! !  INTRINSIC FUNCTIONS REQUIRED ARE:
+! !
+! !     INT, DBLE, EXP, LOG, REAL, SIN
+! !
+! !
+! ! REFERENCES:  AN OVERVIEW OF SOFTWARE DEVELOPMENT FOR SPECIAL
+! !              FUNCTIONS   W. J. CODY, LECTURE NOTES IN MATHEMATICS,
+! !              506, NUMERICAL ANALYSIS DUNDEE, 1975, G. A. WATSON
+! !              (ED.), SPRINGER VERLAG, BERLIN, 1976.
+! !
+! !              COMPUTER APPROXIMATIONS, HART, ET. AL., WILEY AND
+! !              SONS, NEW YORK, 1968.
+! !
+! !  LATEST MODIFICATION: OCTOBER 12, 1989
+! !
+! !  AUTHORS: W. J. CODY AND L. STOLTZ
+! !           APPLIED MATHEMATICS DIVISION
+! !           ARGONNE NATIONAL LABORATORY
+! !           ARGONNE, IL 60439
+! !
+! !----------------------------------------------------------------------
+!       implicit none
+!       INTEGER I,N
+!       LOGICAL PARITY
+!       REAL                                                          &
+!           SQRTPI, &
+!           CONV,EPS,FACT,HALF,ONE,RES,SUM,TWELVE,                    &
+!           TWO,X,XBIG,XDEN,XINF,XMININ,XNUM,Y,Y1,YSQ,Z,ZERO
+!       REAL, DIMENSION(7) :: C
+!       REAL, DIMENSION(8) :: P
+!       REAL, DIMENSION(8) :: Q
+! !----------------------------------------------------------------------
+! !  MATHEMATICAL CONSTANTS
+! !----------------------------------------------------------------------
+!       DATA ONE,HALF,TWELVE,TWO,ZERO/1.0E0,0.5E0,12.0E0,2.0E0,0.0E0/
+!       DATA SQRTPI/0.9189385332046727417803297/
+
+! !----------------------------------------------------------------------
+! !  MACHINE DEPENDENT PARAMETERS
+! !----------------------------------------------------------------------
+!       DATA XBIG,XMININ,EPS/35.040E0,1.18E-38,1.19E-7/,XINF/3.4E38/
+! !----------------------------------------------------------------------
+! !  NUMERATOR AND DENOMINATOR COEFFICIENTS FOR RATIONAL MINIMAX
+! !     APPROXIMATION OVER (1,2).
+! !----------------------------------------------------------------------
+!       DATA P/-1.71618513886549492533811E+0,2.47656508055759199108314E+1,  &
+!              -3.79804256470945635097577E+2,6.29331155312818442661052E+2,  &
+!              8.66966202790413211295064E+2,-3.14512729688483675254357E+4,  &
+!              -3.61444134186911729807069E+4,6.64561438202405440627855E+4/
+!       DATA Q/-3.08402300119738975254353E+1,3.15350626979604161529144E+2,  &
+!              -1.01515636749021914166146E+3,-3.10777167157231109440444E+3, &
+!               2.25381184209801510330112E+4,4.75584627752788110767815E+3,  &
+!             -1.34659959864969306392456E+5,-1.15132259675553483497211E+5/
+! !----------------------------------------------------------------------
+! !  COEFFICIENTS FOR MINIMAX APPROXIMATION OVER (12, INF).
+! !----------------------------------------------------------------------
+!       DATA C/-1.910444077728E-03,8.4171387781295E-04,                      &
+!            -5.952379913043012E-04,7.93650793500350248E-04,				   &
+!            -2.777777777777681622553E-03,8.333333333333333331554247E-02,	   &
+!             5.7083835261E-03/
+! !----------------------------------------------------------------------
+! !  STATEMENT FUNCTIONS FOR CONVERSION BETWEEN INTEGER AND FLOAT
+! !----------------------------------------------------------------------
+!       CONV(I) = REAL(I)
+!       PARITY=.FALSE.
+!       FACT=ONE
+!       N=0
+!       Y=X
+!       IF(Y.LE.ZERO)THEN
+! !----------------------------------------------------------------------
+! !  ARGUMENT IS NEGATIVE
+! !----------------------------------------------------------------------
+!         Y=-X
+!         Y1=AINT(Y)
+!         RES=Y-Y1
+!         IF(RES.NE.ZERO)THEN
+!           IF(Y1.NE.AINT(Y1*HALF)*TWO)PARITY=.TRUE.
+!           FACT=-PI/SIN(PI*RES)
+!           Y=Y+ONE
+!         ELSE
+!           RES=XINF
+!           GOTO 900
+!         ENDIF
+!       ENDIF
+! !----------------------------------------------------------------------
+! !  ARGUMENT IS POSITIVE
+! !----------------------------------------------------------------------
+!       IF(Y.LT.EPS)THEN
+! !----------------------------------------------------------------------
+! !  ARGUMENT .LT. EPS
+! !----------------------------------------------------------------------
+!         IF(Y.GE.XMININ)THEN
+!           RES=ONE/Y
+!         ELSE
+!           RES=XINF
+!           GOTO 900
+!         ENDIF
+!       ELSEIF(Y.LT.TWELVE)THEN
+!         Y1=Y
+!         IF(Y.LT.ONE)THEN
+! !----------------------------------------------------------------------
+! !  0.0 .LT. ARGUMENT .LT. 1.0
+! !----------------------------------------------------------------------
+!           Z=Y
+!           Y=Y+ONE
+!         ELSE
+! !----------------------------------------------------------------------
+! !  1.0 .LT. ARGUMENT .LT. 12.0, REDUCE ARGUMENT IF NECESSARY
+! !----------------------------------------------------------------------
+!           N=INT(Y)-1
+!           Y=Y-CONV(N)
+!           Z=Y-ONE
+!         ENDIF
+! !----------------------------------------------------------------------
+! !  EVALUATE APPROXIMATION FOR 1.0 .LT. ARGUMENT .LT. 2.0
+! !----------------------------------------------------------------------
+!         XNUM=ZERO
+!         XDEN=ONE
+!         DO I=1,8
+!           XNUM=(XNUM+P(I))*Z
+!           XDEN=XDEN*Z+Q(I)
+!         END DO
+!         RES=XNUM/XDEN+ONE
+!         IF(Y1.LT.Y)THEN
+! !----------------------------------------------------------------------
+! !  ADJUST RESULT FOR CASE  0.0 .LT. ARGUMENT .LT. 1.0
+! !----------------------------------------------------------------------
+!           RES=RES/Y1
+!         ELSEIF(Y1.GT.Y)THEN
+! !----------------------------------------------------------------------
+! !  ADJUST RESULT FOR CASE  2.0 .LT. ARGUMENT .LT. 12.0
+! !----------------------------------------------------------------------
+!           DO I=1,N
+!             RES=RES*Y
+!             Y=Y+ONE
+!           END DO
+!         ENDIF
+!       ELSE
+! !----------------------------------------------------------------------
+! !  EVALUATE FOR ARGUMENT .GE. 12.0,
+! !----------------------------------------------------------------------
+!         IF(Y.LE.XBIG)THEN
+!           YSQ=Y*Y
+!           SUM=C(7)
+!           DO I=1,6
+!             SUM=SUM/YSQ+C(I)
+!           END DO
+!           SUM=SUM/Y-Y+SQRTPI
+!           SUM=SUM+(Y-HALF)*LOG(Y)
+!           RES=EXP(SUM)
+!         ELSE
+!           RES=XINF
+!           GOTO 900
+!         ENDIF
+!       ENDIF
+! !----------------------------------------------------------------------
+! !  FINAL ADJUSTMENTS AND RETURN
+! !----------------------------------------------------------------------
+!       IF(PARITY)RES=-RES
+!       IF(FACT.NE.ONE)RES=FACT/RES
+!   900 GAMMA=RES
+!       RETURN
+! ! ---------- LAST LINE OF GAMMA ----------
+! END FUNCTION GAMMA
 
 end module microphysics
 

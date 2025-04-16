@@ -387,7 +387,7 @@ real, dimension(nzm) :: rhowcl, rhowmsecl, rhowtlcl, rhowqtcl,  &
 	end do	
 
 	call hbuf_put('TVFLUX',tvwle,factor_xy)
-	call hbuf_put('QCFLUX',qcwle,factor_xy)
+	call hbuf_put('QLFLUX',qcwle,factor_xy)
 	call hbuf_put('QIFLUX',qiwle,factor_xy)
 
         !bloss: UW additions
@@ -458,7 +458,7 @@ real, dimension(nzm) :: rhowcl, rhowmsecl, rhowtlcl, rhowqtcl,  &
 	call hbuf_put('THETAL2',tl2z,factor_xy)  ! thetal variance (MO)
 	call hbuf_put('TQ',tqz,factor_xy)
 	call hbuf_put('QT2',q2z,1.e6*factor_xy)
-	call hbuf_put('QC2',qc2z,1.e6*factor_xy)
+	call hbuf_put('QL2',qc2z,1.e6*factor_xy)
 	call hbuf_put('QI2',qi2z,1.e6*factor_xy)
 	call hbuf_put('QS2',qs2z,1.e6*factor_xy)
 	
@@ -633,13 +633,13 @@ real, dimension(nzm) :: rhowcl, rhowmsecl, rhowtlcl, rhowqtcl,  &
 	call hbuf_put('T2GRAD',t2legrad,1.)
 	call hbuf_put('T2DISSIP',t2lediss,1.)
 	call hbuf_put('T2DIFTR',t2lediff,1.)
-	call hbuf_put('T2PREC',t2leprec,1.)
+	! call hbuf_put('T2PREC',t2leprec,1.)
 
-	call hbuf_put('Q2ADVTR',q2leadv,1.)
-	call hbuf_put('Q2GRAD',q2legrad,1.)
-	call hbuf_put('Q2DISSIP',q2lediss,1.)
-	call hbuf_put('Q2DIFTR',q2lediff,1.)
-	call hbuf_put('Q2PREC',q2leprec,1.)
+	! call hbuf_put('Q2ADVTR',q2leadv,1.)
+	! call hbuf_put('Q2GRAD',q2legrad,1.)
+	! call hbuf_put('Q2DISSIP',q2lediss,1.)
+	! call hbuf_put('Q2DIFTR',q2lediff,1.)
+	! call hbuf_put('Q2PREC',q2leprec,1.)
 
 !------------------------------------------------------------------
 ! HW and QW budgets:
@@ -691,14 +691,14 @@ real, dimension(nzm) :: rhowcl, rhowmsecl, rhowtlcl, rhowqtcl,  &
 	call hbuf_put('TWGRAD',twgrad,factor_xy)
 	call hbuf_put('TWBUOY',twlebuoy,factor_xy)
 	call hbuf_put('TWPRES',twlepres,factor_xy)
-	call hbuf_put('TWPREC',twleprec,factor_xy)
+	! call hbuf_put('TWPREC',twleprec,factor_xy)
 
 	call hbuf_put('QWADV',qwleadv,factor_xy)
 	call hbuf_put('QWDIFF',qwlediff,factor_xy)
 	call hbuf_put('QWGRAD',qwgrad,factor_xy)
 	call hbuf_put('QWBUOY',qwlebuoy,factor_xy)
 	call hbuf_put('QWPRES',qwlepres,factor_xy)
-	call hbuf_put('QWPREC',qwleprec,factor_xy)
+	! call hbuf_put('QWPREC',qwleprec,factor_xy)
 
 !-------------------------------------------------------------
 !	Conditional statistics:

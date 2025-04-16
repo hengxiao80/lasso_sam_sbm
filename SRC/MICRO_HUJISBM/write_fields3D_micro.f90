@@ -22,7 +22,8 @@ integer m
 
 
 ! nfields= 16+1+3*33 ! number of 3D fields to save, with squashed ice particle #s
-nfields= 16+1+2*33 ! number of 3D fields to save
+! nfields= 16+1+2*33 ! number of 3D fields to save
+nfields= 16+1+1+2*33 ! number of 3D fields to save, added refl_10cm
 
 ! if(.not.docloud) nfields=nfields-1
 ! if(.not.doprecip) nfields=nfields-1
@@ -378,6 +379,20 @@ end if ! masterproc.or.output_sep
   units='#/L'
   call compress3D(tmp,nx,ny,nzm,name,long_name,units, &
                                  save3Dbin,dompi,rank,nsubdomains)
+
+  nfields1=nfields1+1
+  do k=1,nzm
+    do j=1,ny
+      do i=1,nx
+        tmp(i,j,k)=refl_10cm(i,j,k)
+      end do
+    end do
+  end do
+  name='REFL'
+  long_name='Radar Reflectivity'
+  units='dBZ'
+  call compress3D(tmp,nx,ny,nzm,name,long_name,units, &
+                  save3Dbin,dompi,rank,nsubdomains)
 
 ! Write CCN spectrum
 
