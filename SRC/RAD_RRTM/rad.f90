@@ -945,6 +945,9 @@ contains
       status = SYSTEM('mkdir -p RESTART/'//timechar(1:10))
     endif
 
+  ! Add barrier here to ensure all processes wait until directory exists
+    call task_barrier()
+
     if(restart_sep) then
       open(56, file = trim(constructRestartFileName4Write(case, caseId, nstep, rank)), &
            status='unknown',form='unformatted')
