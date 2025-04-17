@@ -24,6 +24,9 @@
          open(66,file=trim(filename), status='unknown',form='unformatted')
         end if
 
+        ! Add barrier here to ensure all processes wait until directory exists
+        call task_barrier()
+
 
 	if(restart_sep) then
 
