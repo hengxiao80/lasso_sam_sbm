@@ -2184,10 +2184,16 @@ subroutine micro_diagnose()
      do i=1,nx
        qv(i,j,k) = qt(i,j,k) - (qc(i,j,k)+qr(i,j,k)+qi(i,j,k)+qs(i,j,k)+    &
                    qg(i,j,k)+qh(i,j,k))
+       ! still need to check if qv is negative so that it doesn't cause out-of-bounds errors in radiation
+       ! which is called right next in main.--- Heng Xiao, 04/18/2025
+       if (qv(i,j,k) .lt. 1.0e-15) qv(i,j,k) = 1.0e-15
+       ! --- Heng Xiao, 04/18/2025
        qcl(i,j,k) = qc(i,j,k)
        qci(i,j,k) = qi(i,j,k)
        qpl(i,j,k) = qr(i,j,k)
        qpi(i,j,k) = qs(i,j,k) + qg(i,j,k) + qh(i,j,k)
+
+
 
 !mo For DYCOMS and ISDAC get all condenced liquid water into the "cloud water" 
 !mo   for radiation and other purposes
