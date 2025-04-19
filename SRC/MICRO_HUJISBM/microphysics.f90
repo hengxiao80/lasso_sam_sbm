@@ -2125,7 +2125,6 @@ end subroutine micro_print
      qv_old= qv
   end if
 
-
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! variables for radar reflecitivity calculations
 !..Create bins of rain (from min diameter up to 5 mm).
@@ -2167,6 +2166,8 @@ end subroutine micro_print
   do i = 1, 256
      mp_debug(i:i) = char(0)
   enddo
+
+  call radar_init
 
         return
       END SUBROUTINE micro_init
