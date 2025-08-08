@@ -71,7 +71,7 @@ if(masterproc.or.output_sep) then
        do while(.true.)
          read(46,end=222)  nsteplast
          if(nsteplast.ge.nstep) then
-           backspace(46)
+          !  backspace(46)
            backspace(46)  ! these two lines added because of
            read(46)       ! a bug in gfrotran compiler
            print*,'2Dcom file at nstep ',nsteplast
@@ -93,6 +93,8 @@ if(masterproc.or.output_sep) then
        end do
 222    continue
        backspace(46)
+       backspace(46)
+       read(46)
        notopened2D=.false. 
     end if
 
