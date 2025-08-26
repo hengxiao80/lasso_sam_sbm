@@ -93,8 +93,8 @@ if(masterproc.or.output_sep) then
        end do
 222    continue
        backspace(46)
-       backspace(46)
-       read(46)
+      !  backspace(46)
+      !  read(46)
        notopened2D=.false. 
     end if
 
