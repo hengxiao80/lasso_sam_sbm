@@ -28,10 +28,18 @@ NAMELIST /PARAMETERS/ dodamping, doupperbound, docloud, doprecip, &
                 donudging_t, donudging_q, tauls,tautqls,&
                 nudging_uv_z1, nudging_uv_z2, nudging_t_z1, nudging_t_z2, &
                 nudging_q_z1, nudging_q_z2, &
+                donudging_transient, dovariable_tauz, &
                 ! --- Heng Xiao, 02/19/2024
                 ! Adding nudging_tq start and end times (in seconds since start)
                 nudging_tq_t1, nudging_tq_t2, &
                 ! --- Heng Xiao, 02/19/2024
+                ! Transient nudging parameters for donudging_transient = .true.
+                tau_transient_nudging, transient_nudging_start, transient_nudging_end, &
+                transient_nudging_ramp, transient_nudging_zfloor, transient_nudging_zinv, &
+                ! variable tauz parameters for dovariable_tauz = .true.
+                variable_tauz_offset_above_inversion, variable_tauz_thickness_of_onset, &
+                variable_tauz_minimum_height, &
+                nudging_t_zramp, nudging_q_zramp, &
                 dofplane, &
 		timelargescale, longitude0, latitude0, day0, nrad, &
 		CEM,LES,OCEAN,LAND,SFC_FLX_FXD,SFC_TAU_FXD, soil_wetness, &

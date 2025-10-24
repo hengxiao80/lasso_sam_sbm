@@ -77,6 +77,22 @@ real:: timelargescale =0. ! time to start large-scale forcing
 real:: nudging_uv_z1 =-1., nudging_uv_z2 = 1000000.
 real:: nudging_t_z1 =-1., nudging_t_z2 = 1000000.
 real:: nudging_q_z1 =-1., nudging_q_z2 = 1000000.
+
+! Transient nudging parameters for donudging_transient = .true.
+real :: tau_transient_nudging = 600. ! time-scale for transient nudging (s)
+real :: transient_nudging_start = -11., transient_nudging_end = -10. ! in days
+real :: transient_nudging_ramp = 0.0625 ! in days
+real :: transient_nudging_zfloor = -1.e6 ! meters (nudging ramps up below this height)
+real :: transient_nudging_zinv = -1.e6 ! meters (nudging goes to zero at inversion, 10 min timescale above)
+! variable tauz parameters for dovariable_tauz = .true.
+real :: variable_tauz_offset_above_inversion = 500. ! meters
+real :: variable_tauz_thickness_of_onset = 300. ! meters
+real :: variable_tauz_minimum_height = 1000. ! meters
+! ramp nudging up and down with a half-cosine profile over zramp
+! meters.  Only used if set to positive value.
+real :: nudging_t_zramp = -1.
+real :: nudging_q_zramp = -1.
+
 ! --- Heng Xiao 02/19/2024
 ! Adding nudging_tq start and end times (in seconds since start)
 real:: nudging_tq_t1 = 0., nudging_tq_t2 = 8640000.
@@ -103,6 +119,8 @@ logical:: donudging_uv = .false.
 logical:: donudging_tq = .false.
 logical:: donudging_t = .false. 
 logical:: donudging_q = .false.
+logical:: dovariable_tauz = .false.
+logical:: donudging_transient = .false.
 logical:: doensemble = .false. 
 logical:: dowallx = .false. 
 logical:: dowally = .false. 
