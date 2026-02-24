@@ -18,9 +18,9 @@ setenv SGS_DIR SGS_TKE
 setenv RAD_DIR RAD_RRTM
 
 # specify microphysics directory in SRC
-setenv MICRO_DIR MICRO_HUJISBM
+# setenv MICRO_DIR MICRO_HUJISBM
 #setenv MICRO_DIR MICRO_SAM1MOM
-#setenv MICRO_DIR MICRO_M2005
+setenv MICRO_DIR MICRO_M2005
 #setenv MICRO_DIR MICRO_DRIZZLE
 
 # specify radar simulator directory in SRC

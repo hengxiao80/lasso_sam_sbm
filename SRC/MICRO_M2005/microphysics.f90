@@ -14,7 +14,7 @@ use vars, only: pres, rho, dtn, w, t, tlatqi, condavg_mask, &
      ncondavg, condavgname, condavglongname
 use params, only: doprecip, docloud
 
-use module_mp_GRAUPEL, only: GRAUPEL_INIT, M2005MICRO_GRAUPEL, &
+use module_mp_GRAUPEL, only: GRAUPEL_INIT, M2005MICRO_GRAUPEL, calc_refl10cm, &
       doicemicro, &         ! use ice species (snow/cloud ice/graupel)
       dograupel, &          ! use graupel
       dohail, &             ! use graupel
@@ -513,8 +513,10 @@ subroutine micro_proc()
 use params, only: fac_cond, fac_sub, rgas
 use grid, only: z, zi
 use vars, only: t,  gamaz, precsfc, precflux, qpfall, tlat, prec_xy, &
+     refl_10cm, & ! radar reflectivity to be output in 3D --- Heng XIAO, 02/20/2026
      nstep, nstatis, icycle, total_water_prec
-
+! for l_calc_refl --- Heng XIAO, 02/20/2026
+use grid, only: nsave3D, nsave3dstart, nsave3dend
 
 real, dimension(nzm) :: &
      tmpqcl, tmpqci, tmpqr, tmpqs, tmpqg, tmpqv, &
@@ -533,6 +535,9 @@ real :: tmpc, tmpr, tmpi, tmps, tmpg
 integer :: i1, i2, j1, j2, i, j, k, m, n
 
 real(8) :: tmp_total, tmptot
+
+! Heng XIAO, 02/20/2026
+logical l_calc_refl
 
 call t_startf ('micro_proc')
 
@@ -557,6 +562,10 @@ if(dostatis) then ! initialize arrays for statistics
 end if
 stend(:,:) = 0.
 mksed(:,:) = 0.
+
+! For radar reflectivity calculation --- Heng XIAO, 02/20/2026
+refl_10cm(:,:,:) = -35.0
+l_calc_refl = (mod(nstep,nsave3D).eq.0).and.(nstep.ge.nsave3Dstart).and.(nstep.le.nsave3Dend)
 
 !!$if(doprecip) total_water_prec = total_water_prec + total_water()
  
@@ -802,6 +811,12 @@ do j = 1,ny
          if(dograupel) stend(:,iqg) = stend(:,iqg) + stendqg
       end if
 
+      if (l_calc_refl) then
+        call calc_refl10cm( &
+          tmpqv(:), tmpqr(:), tmpqs(:), tmpqg(:), & ! in kg/kg or g/g
+          tmptabs(:), tmppres(:), refl_10cm(i,j,:), &
+          1, nzm, i, j, tmpnr(:), tmpns(:), tmpng(:)) ! in #/cm^3
+      endif
    end do ! i = 1,nx
 end do ! j = 1,ny
 
@@ -844,6 +859,8 @@ end if
 !!$if(doprecip) total_water_prec = total_water_prec - total_water()
 
 if (docloud)  call micro_diagnose()   ! leave this line here
+
+
 
 call t_stopf ('micro_proc')
 

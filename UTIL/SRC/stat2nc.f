@@ -322,11 +322,11 @@ c----------------------------------------------------------
         long_name = 'Cloud Water Path'
         abbr_name = 'CWP'
         units = 'g/m2'
-        call HBUF_read(2,nzm,'MQC',1,ntime,f,m)
+        call HBUF_read(2,nzm,'QC',1,ntime,f,m)
         do i=1,ntime
          tmp(i)=0.
          do k=1,nzm-1
-          tmp(i)=tmp(i)+f(k+(i-1)*nzm)*dz(k)
+          tmp(i)=tmp(i)+rho(k)*f(k+(i-1)*nzm)*dz(k)
          end do
         end do
         err = NF_REDEF(ncid)
@@ -343,11 +343,11 @@ c----------------------------------------------------------
         long_name = 'Ice Water Path'
         abbr_name = 'IWP'
         units = 'g/m2'
-        call HBUF_read(2,nzm,'MQI',1,ntime,f,m)
+        call HBUF_read(2,nzm,'QI',1,ntime,f,m)
         do i=1,ntime
          tmp(i)=0.
          do k=1,nzm-1
-          tmp(i)=tmp(i)+f(k+(i-1)*nzm)*dz(k)
+          tmp(i)=tmp(i)+rho(k)*f(k+(i-1)*nzm)*dz(k)
          end do
         end do
         err = NF_REDEF(ncid)
@@ -364,11 +364,11 @@ c----------------------------------------------------------
         long_name = 'Rain Water Path'
         abbr_name = 'RWP'
         units = 'g/m2'
-        call HBUF_read(2,nzm,'MQR',1,ntime,f,m)
+        call HBUF_read(2,nzm,'QR',1,ntime,f,m)
         do i=1,ntime
          tmp(i)=0.
          do k=1,nzm-1
-          tmp(i)=tmp(i)+f(k+(i-1)*nzm)*dz(k)
+          tmp(i)=tmp(i)+rho(k)*f(k+(i-1)*nzm)*dz(k)
          end do
         end do
         err = NF_REDEF(ncid)
@@ -385,11 +385,11 @@ c----------------------------------------------------------
         long_name = 'Snow Water Path'
         abbr_name = 'SWP'
         units = 'g/m2'
-        call HBUF_read(2,nzm,'MQS',1,ntime,f,m)
+        call HBUF_read(2,nzm,'QS',1,ntime,f,m)
         do i=1,ntime
          tmp(i)=0.
          do k=1,nzm-1
-          tmp(i)=tmp(i)+f(k+(i-1)*nzm)*dz(k)
+          tmp(i)=tmp(i)+rho(k)*f(k+(i-1)*nzm)*dz(k)
          end do
         end do
         err = NF_REDEF(ncid)
@@ -406,11 +406,11 @@ c----------------------------------------------------------
         long_name = 'Grauple Water Path'
         abbr_name = 'GWP'
         units = 'g/m2'
-        call HBUF_read(2,nzm,'MQG',1,ntime,f,m)
+        call HBUF_read(2,nzm,'QG',1,ntime,f,m)
         do i=1,ntime
          tmp(i)=0.
          do k=1,nzm-1
-          tmp(i)=tmp(i)+f(k+(i-1)*nzm)*dz(k)
+          tmp(i)=tmp(i)+rho(k)*f(k+(i-1)*nzm)*dz(k)
          end do
         end do
         err = NF_REDEF(ncid)
@@ -427,11 +427,11 @@ c----------------------------------------------------------
         long_name = 'Hail Water Path'
         abbr_name = 'HWP'
         units = 'g/m2'
-        call HBUF_read(2,nzm,'MQH',1,ntime,f,m)
+        call HBUF_read(2,nzm,'QH',1,ntime,f,m)
         do i=1,ntime
          tmp(i)=0.
          do k=1,nzm-1
-          tmp(i)=tmp(i)+f(k+(i-1)*nzm)*dz(k)
+          tmp(i)=tmp(i)+rho(k)*f(k+(i-1)*nzm)*dz(k)
          end do
         end do
         err = NF_REDEF(ncid)

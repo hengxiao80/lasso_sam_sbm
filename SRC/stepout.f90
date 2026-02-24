@@ -94,7 +94,7 @@ if(mod(nstep,nsave3D).eq.0.and.nstep.ge.nsave3Dstart.and.nstep.le.nsave3Dend ) t
   end if
   if(qnmax(1).ge.qnsave3D) then 
     call write_fields3D()
-    call write_fields3D_micro()     ! Added for SBM (MO: mikhail@pnnl.gov)
+    ! call write_fields3D_micro()     ! Added for SBM (MO: mikhail@pnnl.gov)
     !call write_3d_forsheba          ! Added for SBM (MO: mikhail@pnnl.gov)
   end if
 endif

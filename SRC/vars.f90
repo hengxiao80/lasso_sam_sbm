@@ -228,6 +228,9 @@ real swvp_xy(nx,ny)  ! saturated water vapor path (wrt water)
 ! Cloud and echo top heights, and cloud top temperature (instantaneous)
 real cloudtopheight(nx,ny), echotopheight(nx,ny), cloudtoptemp(nx,ny)
 
+! radar reflectivity from MICRO_M2005 --- H. XIAO, 02/20/2026
+real refl_10cm(nx,ny,nzm)
+
 ! END UW ADDITIONS
 !===========================================================================
 

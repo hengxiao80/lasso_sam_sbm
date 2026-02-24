@@ -21,9 +21,9 @@ integer i,j,k,n,nfields,nfields1
 real tmp(nx,ny,nzm)
 
 ! nfields=8 ! number of 3D fields to save
-nfields=10 ! number of 3D fields to save, QN->QCL, QCI, QP->QPL, QPI
+nfields=11 ! number of 3D fields to save, QN->QCL, QCI, QP->QPL, QPI
 if(.not.docloud) nfields=nfields-2
-if(.not.doprecip) nfields=nfields-2
+if(.not.doprecip) nfields=nfields-3
 !bloss: add 3D outputs for microphysical fields specified by flag_micro3Dout
 !       except for water vapor (already output as a SAM default).
 
@@ -321,6 +321,19 @@ if(doprecip) then
   units='g/kg'
   call compress3D(tmp,nx,ny,nzm,name,long_name,units, &
                   save3Dbin,dompi,rank,nsubdomains)
+  nfields1=nfields1+1
+  do k=1,nzm
+    do j=1,ny
+      do i=1,nx
+        tmp(i,j,k)=refl_10cm(i,j,k)
+      end do
+    end do
+  end do
+  name='REFL'
+  long_name='Radar Reflectivity'
+  units='dBZ'
+  call compress3D(tmp,nx,ny,nzm,name,long_name,units, &
+                  save3Dbin,dompi,rank,nsubdomains)  
 end if
 
 
