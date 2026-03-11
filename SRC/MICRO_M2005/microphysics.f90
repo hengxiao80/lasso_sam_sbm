@@ -670,8 +670,10 @@ do j = 1,ny
            effc1d,effi1d,effs1d,effr1d, &
            dtn, &
            i1,i2, j1,j2, 1,nzm, i1,i2, j1,j2, 1,nzm, &
-           mtendqg,mtendng,tmpqg,tmpng,effg1d,stendqg, &
-           stendqr,stendqci,stendqs,stendqcl)
+           mtendqg,mtendng,tmpqg,tmpng,effg1d, &
+           stendqg,stendqr,stendqci,stendqs,stendqcl, &
+           ! added output for # sedimentation tendencies --- Heng XIAO, 03/11/2026
+           stendng,stendnr,stendnci,stendns,stendncl)
  
      ! update microphysical quantities in this grid column
       if(doprecip) then
@@ -695,11 +697,13 @@ do j = 1,ny
 
          ! add rain tendencies to cloud
          stendqcl(:) = stendqcl(:) + stendqr(:)
+         stendncl(:) = stendncl(:) + stendnr(:) ! HX
          mtendqcl(:) = mtendqcl(:) + mtendqr(:)
          mtendncl(:) = mtendncl(:) + mtendnr(:)
 
          ! zero out rain tendencies
          stendqr(:) = 0.
+         stendnr(:) = 0. ! HX
          mtendqr(:) = 0.
          mtendnr(:) = 0.
       end if
@@ -801,14 +805,19 @@ do j = 1,ny
       end if ! dostatis
 
       stend(:,iqv) = stend(:,iqv) + stendqcl !bloss/qt: iqcl --> iqv
+      if(dopredictNc) stend(:,incl) = stend(:,incl) + stendncl ! HX
       if(doprecip) then
          stend(:,iqr) = stend(:,iqr) + stendqr
+         stend(:,inr) = stend(:,inr) + stendnr ! HX
       end if
 
       if(doicemicro) then
          stend(:,iqci) = stend(:,iqci) + stendqci
+         stend(:,inci) = stend(:,inci) + stendnci ! HX
          stend(:,iqs) = stend(:,iqs) + stendqs
+         stend(:,ins) = stend(:,ins) + stendns ! HX
          if(dograupel) stend(:,iqg) = stend(:,iqg) + stendqg
+         if(dograupel) stend(:,ing) = stend(:,ing) + stendng ! HX
       end if
 
       if (l_calc_refl) then
@@ -827,6 +836,18 @@ do k = 1,nzm
    tmpc = tmpc + stend(m,iqv)*rho(m)*dz*adz(m)  !bloss/qt: iqcl --> iqv
    mksed(m,iqv) = tmpc
 end do
+! back sedimentation flux out from cloud droplet number concentration tendency --- HX
+! Re-using tmpc and doing the extra loop (instead of doing it in the loop above)
+! because all the tmp* declared above start to get confusing.
+! Not very efficient but clearer for human readers.
+if(dopredictNc) then
+   tmpc = 0.
+   do k = 1,nzm
+      m = nz-k
+      tmpc = tmpc + stend(m,incl)*rho(m)*dz*adz(m) 
+      mksed(m,incl) = tmpc ! HX
+   enddo
+endif
 precflux(1:nzm) = precflux(1:nzm) - mksed(:,iqv)*dtn/dz
 
 if(doprecip) then
@@ -835,6 +856,13 @@ if(doprecip) then
       m = nz-k
       tmpr = tmpr + stend(m,iqr)*rho(m)*dz*adz(m)
       mksed(m,iqr) = tmpr
+   end do
+   ! HX
+   tmpr = 0.
+   do k = 1,nzm
+      m = nz-k
+      tmpr = tmpr + stend(m,inr)*rho(m)*dz*adz(m)
+      mksed(m,inr) = tmpr
    end do
    precflux(1:nzm) = precflux(1:nzm) - mksed(:,iqr)*dtn/dz
 end if
@@ -851,6 +879,19 @@ if(doicemicro) then
       mksed(m,iqci) = tmpi
       mksed(m,iqs) = tmps
       mksed(m,iqg) = tmpg
+   end do
+   ! HX
+   tmpi = 0.
+   tmps = 0.
+   tmpg = 0.
+   do k = 1,nzm
+      m = nz-k
+      tmpi = tmpi + stend(m,inci)*rho(m)*dz*adz(m)
+      tmps = tmps + stend(m,ins)*rho(m)*dz*adz(m)
+      tmpg = tmpg + stend(m,ing)*rho(m)*dz*adz(m)
+      mksed(m,inci) = tmpi
+      mksed(m,ins) = tmps
+      mksed(m,ing) = tmpg
    end do
    precflux(1:nzm) = precflux(1:nzm) &
         - (mksed(:,iqci) + mksed(:,iqs) + mksed(:,iqg))*dtn/dz
